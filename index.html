@@ -3,188 +3,186 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Buffet Rio - Gestão Inteligente</title>
-    <!-- Ícones e Bibliotecas -->
+    <title>Buffet Rio - Acesso Restrito</title>
     <script src="https://unpkg.com"></script>
     <style>
-        :root { --bg: #020617; --side: #09090b; --card: #0f172a; --accent: #3b82f6; --text: #f8fafc; --muted: #94a3b8; --border: #1e293b; --success: #10b981; --danger: #ef4444; }
+        :root { --bg: #020617; --side: #09090b; --card: #0f172a; --accent: #3b82f6; --text: #f8fafc; --muted: #94a3b8; --border: #1e293b; }
         * { box-sizing: border-box; transition: all 0.2s; font-family: 'Inter', sans-serif; }
         body { margin: 0; background: var(--bg); color: var(--text); display: flex; height: 100vh; overflow: hidden; }
 
-        /* Login */
-        #login-screen { position: fixed; inset: 0; background: var(--bg); z-index: 9999; display: flex; align-items: center; justify-content: center; }
-        .login-box { background: var(--card); padding: 40px; border-radius: 24px; border: 1px solid var(--border); text-align: center; width: 340px; }
+        /* Tela de Login */
+        #login-screen { position: fixed; inset: 0; background: var(--bg); z-index: 9999; display: flex; align-items: center; justify-content: center; flex-direction: column; }
+        .login-box { background: var(--card); padding: 40px; border-radius: 20px; border: 1px solid var(--border); text-align: center; width: 320px; }
 
-        /* App Interface */
+        /* Layout Geral (Escondido antes do login) */
         #app-interface { display: none; width: 100%; height: 100vh; }
-        nav { width: 280px; background: var(--side); border-right: 1px solid var(--border); padding: 20px; display: flex; flex-direction: column; }
-        .logo { font-weight: 700; color: var(--accent); margin-bottom: 25px; display: flex; align-items: center; gap: 10px; font-size: 1.2rem; }
         
-        .btn-add-main { background: var(--accent); color: white; border: none; padding: 14px; border-radius: 10px; cursor: pointer; font-weight: bold; margin-bottom: 20px; width: 100%; }
-        .nav-btn { width: 100%; padding: 12px; margin-bottom: 6px; background: transparent; border: none; color: var(--muted); text-align: left; border-radius: 8px; cursor: pointer; display: flex; gap: 12px; }
+        nav { width: 280px; background: var(--side); border-right: 1px solid var(--border); padding: 20px; display: flex; flex-direction: column; }
+        .logo { font-weight: 700; color: var(--accent); margin-bottom: 30px; display: flex; align-items: center; gap: 10px; }
+        .btn-add-main { background: var(--accent); color: white; border: none; padding: 12px; border-radius: 8px; cursor: pointer; font-weight: bold; margin-bottom: 20px; }
+        .nav-btn { width: 100%; padding: 12px; margin-bottom: 5px; background: transparent; border: none; color: var(--muted); text-align: left; border-radius: 8px; cursor: pointer; display: flex; gap: 10px; }
         .nav-btn.active { background: #1e293b; color: white; border-left: 4px solid var(--accent); }
 
-        /* QR Code Corrigido */
-        .qr-area { margin-top: auto; padding: 20px 0; text-align: center; border-top: 1px solid var(--border); }
-        .qr-placeholder { background: white; padding: 10px; border-radius: 10px; width: 140px; height: 140px; margin: 0 auto; display: flex; align-items: center; justify-content: center; }
-        .qr-placeholder img { max-width: 100%; display: block; }
-
-        /* Conteúdo */
         main { flex-grow: 1; padding: 40px; overflow-y: auto; }
-        .search-box { width: 100%; padding: 16px; background: var(--card); border: 1px solid var(--border); border-radius: 12px; color: white; margin-bottom: 30px; outline: none; }
+        .search-input { width: 100%; padding: 15px; background: var(--card); border: 1px solid var(--border); border-radius: 12px; color: white; margin-bottom: 20px; outline: none; }
         .grid-num { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 15px; }
-        .box-num { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 20px; text-align: center; cursor: pointer; }
-        .box-num:hover { border-color: var(--accent); background: #1e293b; }
-
-        /* Tabela */
-        table { width: 100%; background: var(--card); border-radius: 14px; border-collapse: collapse; margin-top: 20px; }
-        td, th { padding: 15px; border-bottom: 1px solid var(--border); text-align: left; }
-        .btn-qty { background: #1e293b; border: 1px solid var(--border); color: white; padding: 5px 10px; border-radius: 5px; cursor: pointer; }
-
-        /* Modal e Letra Verde IA */
-        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.9); align-items: center; justify-content: center; z-index: 10000; }
+        .box-num { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 20px; text-align: center; cursor: pointer; }
+        
+        table { width: 100%; background: var(--card); border-radius: 12px; border-collapse: collapse; margin-top: 20px; }
+        th { text-align: left; padding: 15px; background: #1e293b; color: var(--muted); font-size: 0.75rem; }
+        td { padding: 15px; border-bottom: 1px solid var(--border); }
+        .btn-del { color: #ef4444; border: none; background: none; cursor: pointer; }
+        
+        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); align-items: center; justify-content: center; z-index: 1000; }
         .modal-box { background: var(--card); padding: 30px; border-radius: 20px; width: 450px; border: 1px solid var(--border); }
         input, select, textarea { width: 100%; padding: 12px; background: #020617; border: 1px solid var(--border); color: white; border-radius: 8px; margin-bottom: 12px; }
-        
-        /* A LETRA VERDE QUE VOCÊ PEDIU */
-        #ia-msg { color: var(--success) !important; font-weight: bold; font-size: 0.85rem; margin-bottom: 10px; display: block; min-height: 20px; }
     </style>
 </head>
 <body>
 
+<!-- TELA DE LOGIN -->
 <div id="login-screen">
     <div class="login-box">
-        <h2 style="color:var(--accent)">Acesso Equipe</h2>
-        <input type="password" id="pass-field" placeholder="Senha do Buffet" style="text-align:center;">
-        <button onclick="fazerLogin()" class="btn-add-main">ENTRAR</button>
+        <i data-lucide="lock" style="color:var(--accent); margin-bottom: 15px;"></i>
+        <h2>Acesso Equipe</h2>
+        <p style="color:var(--muted); font-size: 0.8rem;">Digite a senha do Buffet</p>
+        <input type="password" id="pass" placeholder="Senha" style="text-align: center;">
+        <button onclick="verificarSenha()" class="btn-add-main" style="width: 100%;">Entrar</button>
     </div>
 </div>
 
+<!-- INTERFACE DO SISTEMA -->
 <div id="app-interface">
     <nav>
         <div class="logo"><i data-lucide="chef-hat"></i> BUFFET RIO</div>
         <button class="btn-add-main" onclick="abrirModal()">➕ NOVO ITEM</button>
-        <button class="nav-btn" id="btn-C1" onclick="irUnidade('C1', 'Estante')"><i data-lucide="box"></i> Câmara 01</button>
-        <button class="nav-btn" id="btn-F1" onclick="irUnidade('F1', 'Gaveta')"><i data-lucide="snowflake"></i> Freezer 01</button>
-        <button class="nav-btn" id="btn-EQ" onclick="irUnidade('EQ', 'Setor')"><i data-lucide="zap"></i> Equipamentos</button>
-
-        <div class="qr-area">
-            <div class="qr-placeholder" id="qr-container">
-                <!-- QR Code aparece aqui -->
-            </div>
-            <p style="font-size:0.6rem; color:var(--muted); margin-top:8px;">COMPARTILHAR ACESSO</p>
-        </div>
+        <div style="font-size:0.7rem; color:var(--muted); margin-bottom: 10px;">UNIDADES</div>
+        <button class="nav-btn" id="btn-C1" onclick="fluxoUnidade('C1', 'Estante')"><i data-lucide="box"></i> Câmara 01</button>
+        <button class="nav-btn" id="btn-C2" onclick="fluxoUnidade('C2', 'Estante')"><i data-lucide="box"></i> Câmara 02</button>
+        <button class="nav-btn" id="btn-F1" onclick="fluxoUnidade('F1', 'Gaveta')"><i data-lucide="snowflake"></i> Freezer 01</button>
+        <button class="nav-btn" id="btn-F2" onclick="fluxoUnidade('F2', 'Gaveta')"><i data-lucide="snowflake"></i> Freezer 02</button>
     </nav>
 
     <main>
-        <input type="text" class="search-box" id="global-search" placeholder="🔍 Buscar item..." oninput="realizarBusca(this.value)">
-        <h1 id="view-title">Dashboard</h1>
-        <div id="view-content"></div>
+        <input type="text" class="search-input" id="global-search" placeholder="🔍 Buscar item em todo o buffet..." oninput="buscaGeral(this.value)">
+        <h1 id="title">Painel de Gestão</h1>
+        <div id="content"></div>
     </main>
 </div>
 
+<!-- MODAL CADASTRO -->
 <div id="modal" class="modal">
     <div class="modal-box">
-        <h3>Cadastrar Item</h3>
-        <input type="text" id="f-nome" placeholder="Nome (Ex: Carne 3)" oninput="ajudaIA(this.value)">
-        <!-- ONDE APARECE A LETRA VERDE -->
-        <span id="ia-msg"></span>
-        
+        <h3>Novo Cadastro</h3>
+        <input type="text" id="f-nome" placeholder="Nome do Item">
         <select id="f-uni">
-            <option value="C1">Câmara 01</option>
-            <option value="F1">Freezer 01</option>
-            <option value="EQ">Equipamentos</option>
+            <option value="C1">Câmara 01</option><option value="C2">Câmara 02</option>
+            <option value="F1">Freezer 01</option><option value="F2">Freezer 02</option>
         </select>
         <input type="number" id="f-num" placeholder="Nº Posição">
-        <textarea id="f-info" placeholder="Info Eletrônica / Observações"></textarea>
-        <button onclick="salvar()" class="btn-add-main">SALVAR</button>
-        <button onclick="abrirModal()" style="background:none; border:none; color:var(--muted); width:100%; cursor:pointer;">Cancelar</button>
+        <textarea id="f-info" placeholder="Info Técnica / Eletrônica"></textarea>
+        <button onclick="salvar()" class="btn-add-main" style="width:100%">SALVAR</button>
+        <button onclick="abrirModal()" style="background:none; border:none; color:var(--muted); width:100%; margin-top:10px; cursor:pointer;">Cancelar</button>
     </div>
 </div>
 
 <script>
-    const SENHA_MESTRA = "1234"; // Mude aqui
-    let db = JSON.parse(localStorage.getItem('buffet_final_v5')) || [];
-    let state = { uni: "", tipo: "", num: "" };
+    // --- SEGURANÇA ---
+    const SENHA_MESTRA = ""; // ALTERE SUA SENHA AQUI
 
-    function fazerLogin() {
-        if(document.getElementById('pass-field').value === SENHA_MESTRA) {
+    function verificarSenha() {
+        const p = document.getElementById('pass').value;
+        if(p === SENHA_MESTRA) {
             document.getElementById('login-screen').style.display = 'none';
             document.getElementById('app-interface').style.display = 'flex';
-            // Gera o QR Code com o link atual
-            const link = window.location.href;
-            document.getElementById('qr-container').innerHTML = `<img src="https://api.qrserver.com{encodeURIComponent(link)}" />`;
             lucide.createIcons();
             render();
-        } else { alert("Senha errada!"); }
-    }
-
-    // FUNÇÃO DA LETRA VERDE (IA)
-    function ajudaIA(val) {
-        const v = val.toLowerCase();
-        const msg = document.getElementById('ia-msg');
-        const numIn = document.getElementById('f-num');
-        const uniSel = document.getElementById('f-uni');
-        
-        let achou = false;
-        if(v.includes('carne') || v.includes('frio')) { uniSel.value = 'C1'; achou = true; }
-        if(v.includes('sorvete') || v.includes('gelo')) { uniSel.value = 'F1'; achou = true; }
-        
-        const n = v.match(/\d+/);
-        if(n) { 
-            numIn.value = n[0]; 
-            msg.innerText = `✨ IA: Localizar em ${uniSel.options[uniSel.selectedIndex].text}, nº ${n[0]}`;
-        } else if(achou) {
-            msg.innerText = `✨ IA: Grupo ${uniSel.options[uniSel.selectedIndex].text} detectado`;
         } else {
-            msg.innerText = "";
+            alert("Senha incorreta!");
         }
     }
 
-    function irUnidade(u, t) {
+    // --- LÓGICA DO SISTEMA ---
+    let db = JSON.parse(localStorage.getItem('buffet')) || [];
+    let state = { uni: "", tipo: "", num: "" };
+
+    function fluxoUnidade(u, t) {
         state.uni = u; state.tipo = t; state.num = "";
+        document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
+        document.getElementById('btn-'+u).classList.add('active');
         render();
     }
 
     function render() {
-        const content = document.getElementById('view-content');
-        if(!state.uni) return;
-        if(!state.num) {
+        const content = document.getElementById('content');
+        const title = document.getElementById('title');
+        if (!state.uni) { title.innerText = "Escolha um estoque"; return; }
+
+        if (!state.num) {
+            title.innerText = `Unidade: ${state.uni}`;
             let html = '<div class="grid-num">';
             for(let i=1; i<=12; i++) {
                 const total = db.filter(x => x.uni === state.uni && x.num == i).length;
-                html += `<div class="box-num" onclick="state.num=${i};render()"><b>${i}</b><br><small>${total} itens</small></div>`;
+                html += `<div class="box-num" onclick="state.num=${i};render()">
+                            <small>${state.tipo}</small><br><b>${i}</b><br>
+                            <span style="color:var(--accent); font-size:0.7rem">${total} itens</span>
+                         </div>`;
             }
             content.innerHTML = html + '</div>';
         } else {
+            title.innerText = `${state.uni} - ${state.tipo} ${state.num}`;
             const itens = db.filter(x => x.uni === state.uni && x.num == state.num);
-            let html = `<table><tr><th>Item</th><th>Qtd</th><th>Info</th><th>Ação</th></tr>`;
+            let html = `<table><thead><tr><th>Item</th><th>Qtd</th><th>Info</th><th>Ação</th></tr></thead><tbody>`;
             itens.forEach(p => {
-                html += `<tr><td>${p.nome}</td><td><button onclick="mudar(${p.id},1)">+</button> ${p.qtd} <button onclick="mudar(${p.id},-1)">-</button></td><td>${p.info}</td><td><button onclick="excluir(${p.id})">❌</button></td></tr>`;
+                html += `<tr><td><b>${p.nome}</b></td>
+                    <td><button onclick="mudar(${p.id},1)">+</button> ${p.qtd} <button onclick="mudar(${p.id},-1)">-</button></td>
+                    <td><small>${p.info || '-'}</small></td>
+                    <td><button onclick="excluir(${p.id})" class="btn-del"><i data-lucide="trash-2"></i></button></td></tr>`;
             });
-            content.innerHTML = html + `</table><button onclick="state.num='';render()" style="margin-top:20px; color:white;">Voltar</button>`;
+            content.innerHTML = html + "</tbody></table>";
         }
+        lucide.createIcons();
     }
 
-    function mudar(id, v) { const i = db.find(x => x.id === id); i.qtd = Math.max(0, i.qtd + v); salvarDB(); }
-    function excluir(id) { if(confirm("Apagar?")) { db = db.filter(x => x.id !== id); salvarDB(); } }
-    function salvarDB() { localStorage.setItem('buffet_final_v5', JSON.stringify(db)); render(); }
+    function buscaGeral(v) {
+        if(!v) { render(); return; }
+        const res = db.filter(i => i.nome.toLowerCase().includes(v.toLowerCase()));
+        let html = `<table><thead><tr><th>Item</th><th>Local</th><th>Qtd</th></tr></thead><tbody>`;
+        res.forEach(p => { html += `<tr><td>${p.nome}</td><td>${p.uni} - ${p.num}</td><td>${p.qtd}</td></tr>`; });
+        document.getElementById('content').innerHTML = html + "</tbody></table>";
+        lucide.createIcons();
+    }
+
+    function mudar(id, v) {
+        const i = db.find(x => x.id === id);
+        i.qtd = Math.max(0, i.qtd + v);
+        atualizarDB();
+    }
+
+    function excluir(id) {
+        if(confirm("Excluir?")) { db = db.filter(x => x.id !== id); atualizarDB(); }
+    }
+
+    function atualizarDB() {
+        localStorage.setItem('buffet', JSON.stringify(db));
+        render();
+    }
 
     function abrirModal() {
         const m = document.getElementById('modal');
         m.style.display = (m.style.display === 'flex') ? 'none' : 'flex';
-        if(m.style.display === 'flex') {
-            document.getElementById('f-nome').value = "";
-            document.getElementById('f-num').value = "";
-            document.getElementById('ia-msg').innerText = "";
-        }
     }
 
     function salvar() {
         db.push({ id: Date.now(), nome: document.getElementById('f-nome').value, uni: document.getElementById('f-uni').value, num: document.getElementById('f-num').value, info: document.getElementById('f-info').value, qtd: 0 });
-        salvarDB(); abrirModal();
+        atualizarDB();
+        document.getElementById('f-nome').value = "";
+        abrirModal();
     }
+
+    lucide.createIcons();
 </script>
 </body>
 </html>
+
 
