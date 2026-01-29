@@ -110,8 +110,7 @@
 
 <script>
     const SENHA_MESTRA = "docesalgado"; // COLOQUE SUA SENHA AQUI
-    const FIREBASE_URL = "https://console.firebase.google.com/project/buffet-rio/database/buffet-rio-default-rtdb/data/~2F?hl=pt-br/estoque.json"; // COLOQUE SEU LINK DO FIREBASE AQUI
-
+    const FIREBASE_URL = "https://buffet-rio-default-rtdb.firebaseio.com";
     let db = { itens: {}, historico: [] };
     let state = { uni: "", tipo: "", max: 12, num: "" };
 
@@ -141,12 +140,14 @@
         if(!det) box.style.display = "none";
     }
 
-    async function syncDB() {
-        try {
-            const res = await fetch(FIREBASE_URL);
-            db = await res.json() || { itens: {}, historico: [] };
-            render();
-        } catch (e) { console.log("Erro sync"); }
+ async function atualizarEstoque() {
+    await fetch(FIREBASE_URL, {
+        method: 'PUT', // PUT substitui o nó 'estoque' pelo novo objeto 'db'
+        body: JSON.stringify(db), 
+        headers: { 'Content-Type': 'application/json' }
+    });
+}
+
     }
 
     async function updateDB() {
