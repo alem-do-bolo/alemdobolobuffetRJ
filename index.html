@@ -101,14 +101,69 @@
         <button onclick="abrirModal()" style="background:none; border:none; color:var(--muted); width:100%; margin-top:10px; cursor:pointer;">Cancelar</button>
     </div>
 </div>
-
 <script>
     const SENHA_MESTRA = "1234";
-    const FIREBASE_URL = "SUA_URL_AQUI/estoque.json"; 
+    const FIREBASE_URL = "SUA_URL_DO_FIREBASE/estoque.json"; 
 
     let db = { itens: {}, historico: [] };
     let state = { uni: "", tipo: "", max: 12, num: "" };
 
+    // --- MAPA DE INTELIGÊNCIA (ONDE CADA COISA DEVE IR) ---
+    const MAPA_INTELIGENTE = {
+        // Câmaras (C1, C2)
+        'picanha': ['C1', 3], 'mignon': ['C1', 3], 'carne': ['C1', 4], 'frango': ['C1', 5],
+        'queijo': ['C1', 1], 'presunto': ['C1', 1], 'leite': ['C1', 2], 'manteiga': ['C1', 2],
+        // Freezers (F1, F2)
+        'sorvete': ['F1', 1], 'gelo': ['F1', 2], 'peixe': ['F1', 5], 'camarao': ['F1', 5],
+        'batata': ['F2', 1], 'congelado': ['F2', 3],
+        // Geladeiras (G1, G2, G3, G4)
+        'iogurte': ['G1', 1], 'suco': ['G1', 2], 'refrigerante': ['G2', 1], 'agua': ['G2', 2],
+        'molho': ['G3', 1], 'verdura': ['G4', 1], 'fruta': ['G4', 2],
+        // Despensa (D)
+        'arroz': ['D', 1], 'feijao': ['D', 1], 'farinha': ['D', 2], 'oleo': ['D', 3], 'sal': ['D', 4],
+        // Sala (S)
+        'prato': ['S', 1], 'copo': ['S', 2], 'taca': ['S', 2], 'talher': ['S', 3], 'guardanapo': ['S', 4],
+        // Confeitaria (CO)
+        'chocolate': ['CO', 1], 'acucar': ['CO', 2], 'fermento': ['CO', 3], 'essencia': ['CO', 4]
+    };
+
+    // FUNÇÃO QUE INDICA AUTOMATICAMENTE PARA QUEM NÃO SABE
+    function rastrearIA(val) {
+        const v = val.toLowerCase();
+        const box = document.getElementById('ia-box');
+        const dest = document.getElementById('ia-dest');
+        const fUni = document.getElementById('f-uni');
+        const fNum = document.getElementById('f-num');
+        
+        let detectado = false;
+
+        for (let palavra in MAPA_INTELIGENTE) {
+            if (v.includes(palavra)) {
+                const [unidade, posicao] = MAPA_INTELIGENTE[palavra];
+                fUni.value = unidade;
+                fNum.value = posicao;
+                
+                box.style.display = "block";
+                dest.innerText = `DESTINO AUTOMÁTICO: ${unidade} na Posição ${posicao}`;
+                detectado = true;
+                break;
+            }
+        }
+
+        // Se não achar no mapa, tenta pegar apenas o número se o usuário digitar (ex: "Prato 5")
+        if (!detectado) {
+            const n = v.match(/\d+/);
+            if(n) { 
+                fNum.value = n; 
+                box.style.display = "block";
+                dest.innerText = "Posição " + n + " detectada pelo número";
+            } else {
+                box.style.display = "none";
+            }
+        }
+    }
+
+    // --- RESTANTE DAS FUNÇÕES (IGUAIS) ---
     async function syncDB() {
         try {
             const res = await fetch(FIREBASE_URL);
@@ -129,17 +184,6 @@
             document.getElementById('qr-img').src = `https://api.qrserver.com{encodeURIComponent(window.location.href)}`;
             lucide.createIcons(); syncDB(); setInterval(syncDB, 5000);
         } else { alert("Senha incorreta!"); }
-    }
-
-    function rastrearIA(val) {
-        const v = val.toLowerCase();
-        const box = document.getElementById('ia-box');
-        const n = v.match(/\d+/);
-        if(n) { 
-            document.getElementById('f-num').value = n; 
-            box.style.display = "block";
-            document.getElementById('ia-dest').innerText = "Posição " + n + " identificada";
-        } else { box.style.display = "none"; }
     }
 
     function fluxo(u, t, m) { state.uni = u; state.tipo = t; state.max = m; state.num = ""; render(); }
@@ -191,6 +235,7 @@
         const m = document.getElementById('modal');
         m.style.display = (m.style.display === 'flex') ? 'none' : 'flex';
         document.getElementById('f-nome').value = "";
+        document.getElementById('ia-box').style.display = "none";
     }
 
     function salvar() {
@@ -199,10 +244,11 @@
         const qtd = parseInt(document.getElementById('f-qtd').value) || 0;
         if(!db.itens) db.itens = {};
         db.itens[id] = { id, nome, uni: document.getElementById('f-uni').value, num: document.getElementById('f-num').value, info: document.getElementById('f-info').value, qtd };
-        db.historico.unshift({ data: new Date().toLocaleString(), acao: "Entrada", item: nome, qtd });
+        db.historico.unshift({ data: new Date().toLocaleString(), acao: "Cadastro", item: nome, qtd });
         updateDB(); abrirModal();
     }
 </script>
+
 </body>
 </html>
 
