@@ -101,13 +101,41 @@
         <button onclick="abrirModal()" style="background:none; border:none; color:var(--muted); width:100%; margin-top:10px; cursor:pointer;">Cancelar</button>
     </div>
 </div>
-
 <script>
     const SENHA_MESTRA = "docesalgado"; 
     const FIREBASE_URL = "https://buffet-rio-default-rtdb.firebaseio.com";
     
     let db = { itens: {}, historico: [] };
     let state = { uni: "", tipo: "", max: 12 };
+
+    // MAPEAMENTO PARA AUTOMATIZAÇÃO (Adicione mais itens aqui)
+    const MAPA_INTELIGENTE = {
+        'picanha': ['C1', 3], 'mignon': ['C1', 3], 'carne': ['C1', 4], 'frango': ['C1', 5],
+        'queijo': ['C1', 1], 'presunto': ['C1', 1], 'leite': ['C1', 2],
+        'sorvete': ['F1', 1], 'gelo': ['F1', 2], 'peixe': ['F1', 5],
+        'iogurte': ['G1', 1], 'suco': ['G1', 2], 'refrigerante': ['G2', 1],
+        'arroz': ['D', 1], 'feijao': ['D', 1], 'prato': ['S', 1], 'taca': ['S', 2],
+        'chocolate': ['CO', 1], 'essencia': ['CO', 4]
+    };
+
+    // FUNÇÃO QUE AUTOMATIZA O DESTINO
+    function rastrearIA(val) {
+        const v = val.toLowerCase().trim();
+        const iaBox = document.getElementById('ia-box');
+        const iaDest = document.getElementById('ia-dest');
+        
+        if (MAPA_INTELIGENTE[v]) {
+            const [sugeridoUni, sugeridoNum] = MAPA_INTELIGENTE[v];
+            iaBox.style.display = 'block';
+            iaDest.innerText = `${sugeridoUni} - Posição ${sugeridoNum}`;
+            
+            // Preenche automaticamente os campos para o funcionário
+            document.getElementById('f-uni').value = sugeridoUni;
+            document.getElementById('f-num').value = sugeridoNum;
+        } else {
+            iaBox.style.display = 'none';
+        }
+    }
 
     // Sincronização com Firebase
     async function carregarDados() {
@@ -139,6 +167,11 @@
     function abrirModal() {
         const m = document.getElementById('modal');
         m.style.display = m.style.display === 'flex' ? 'none' : 'flex';
+        // Limpa campos ao abrir
+        if(m.style.display === 'flex') {
+            document.getElementById('f-nome').value = "";
+            document.getElementById('ia-box').style.display = 'none';
+        }
     }
 
     function fluxo(uni, tipo, max) {
@@ -166,7 +199,13 @@
 
         if(!nome || !num || !qtd) return alert("Preencha os campos");
 
-        db.itens[`${uni}-${num}`] = { nome, qtd, obs: document.getElementById('f-info').value, data: new Date().toLocaleDateString() };
+        db.itens[`${uni}-${num}`] = { 
+            nome, 
+            qtd, 
+            obs: document.getElementById('f-info').value, 
+            data: new Date().toLocaleDateString() 
+        };
+        
         sincronizar();
         abrirModal();
         fluxo(state.uni || uni, state.tipo || 'P', state.max || 12);
