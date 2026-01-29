@@ -3,119 +3,147 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Buffet Rio - Inteligência de Estoque</title>
+    <title>Buffet Rio - Gestão de Estoque</title>
     <script src="https://unpkg.com"></script>
     <style>
-        :root { --bg: #020617; --side: #09090b; --card: #0f172a; --accent: #3b82f6; --text: #f8fafc; --muted: #94a3b8; --border: #1e293b; --success: #10b981; }
+        :root { --bg: #020617; --side: #09090b; --card: #0f172a; --accent: #3b82f6; --text: #f8fafc; --muted: #94a3b8; --border: #1e293b; --success: #10b981; --danger: #ef4444; }
         * { box-sizing: border-box; transition: all 0.2s; font-family: 'Inter', sans-serif; }
         body { margin: 0; background: var(--bg); color: var(--text); display: flex; height: 100vh; overflow: hidden; }
 
-        /* Menu Lateral */
-        nav { width: 280px; background: var(--side); border-right: 1px solid var(--border); padding: 20px; display: flex; flex-direction: column; }
-        .logo { font-weight: 700; color: var(--accent); margin-bottom: 30px; display: flex; align-items: center; gap: 10px; }
-        .btn-add-main { background: var(--accent); color: white; border: none; padding: 12px; border-radius: 8px; cursor: pointer; font-weight: bold; margin-bottom: 20px; }
-        .nav-btn { width: 100%; padding: 12px; margin-bottom: 5px; background: transparent; border: none; color: var(--muted); text-align: left; border-radius: 8px; cursor: pointer; display: flex; gap: 10px; }
-        .nav-btn.active { background: #1e293b; color: white; border-left: 4px solid var(--accent); }
+        /* Login */
+        #login-screen { position: fixed; inset: 0; background: var(--bg); z-index: 9999; display: flex; align-items: center; justify-content: center; }
+        .login-box { background: var(--card); padding: 40px; border-radius: 24px; border: 1px solid var(--border); text-align: center; width: 340px; box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); }
 
-        /* Main Content */
+        /* Interface Principal */
+        #app-interface { display: none; width: 100%; height: 100vh; }
+        nav { width: 280px; background: var(--side); border-right: 1px solid var(--border); padding: 20px; display: flex; flex-direction: column; overflow-y: auto; }
+        .logo { font-weight: 700; color: var(--accent); margin-bottom: 25px; display: flex; align-items: center; gap: 10px; font-size: 1.2rem; }
+        
+        .btn-add-main { background: var(--accent); color: white; border: none; padding: 14px; border-radius: 10px; cursor: pointer; font-weight: bold; margin-bottom: 20px; box-shadow: 0 4px 14px rgba(59, 130, 246, 0.4); }
+        .nav-btn { width: 100%; padding: 12px; margin-bottom: 6px; background: transparent; border: none; color: var(--muted); text-align: left; border-radius: 8px; cursor: pointer; display: flex; gap: 12px; font-size: 0.95rem; }
+        .nav-btn:hover, .nav-btn.active { background: #1e293b; color: white; }
+        .nav-btn.active { border-left: 4px solid var(--accent); background: linear-gradient(90deg, #1e293b 0%, transparent 100%); }
+
+        /* QR Code no Menu */
+        .qr-area { margin-top: auto; padding: 20px 0; text-align: center; border-top: 1px solid var(--border); }
+        .qr-code { background: white; padding: 8px; border-radius: 12px; width: 130px; margin: 0 auto; }
+
+        /* Conteúdo */
         main { flex-grow: 1; padding: 40px; overflow-y: auto; }
+        .search-box { width: 100%; padding: 16px 20px; background: var(--card); border: 1px solid var(--border); border-radius: 14px; color: white; margin-bottom: 30px; outline: none; font-size: 1rem; }
         .grid-num { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 15px; }
-        .box-num { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 20px; text-align: center; cursor: pointer; }
-        .box-num:hover { border-color: var(--accent); transform: scale(1.05); }
+        .box-num { background: var(--card); border: 1px solid var(--border); border-radius: 14px; padding: 20px; text-align: center; cursor: pointer; }
+        .box-num:hover { border-color: var(--accent); transform: translateY(-3px); background: #1e293b; }
 
-        /* Tabela */
-        table { width: 100%; background: var(--card); border-radius: 12px; border-collapse: collapse; margin-top: 20px; }
-        th { text-align: left; padding: 15px; background: #1e293b; color: var(--muted); font-size: 0.75rem; }
-        td { padding: 15px; border-bottom: 1px solid var(--border); }
-        .info-chip { font-size: 0.75rem; color: var(--muted); background: #1e293b; padding: 5px 10px; border-radius: 4px; border-left: 3px solid var(--accent); }
+        /* Tabelas */
+        table { width: 100%; background: var(--card); border-radius: 14px; border-collapse: collapse; overflow: hidden; margin-top: 20px; }
+        th { text-align: left; padding: 16px; background: #1e293b; color: var(--muted); font-size: 0.75rem; text-transform: uppercase; }
+        td { padding: 16px; border-bottom: 1px solid var(--border); }
+        .btn-qty { background: #1e293b; border: 1px solid var(--border); color: white; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-weight: bold; }
+        .btn-del { color: var(--danger); border: none; background: none; cursor: pointer; padding: 5px; }
 
-        /* Modal Inteligente */
-        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); align-items: center; justify-content: center; z-index: 1000; }
-        .modal-box { background: var(--card); padding: 30px; border-radius: 20px; width: 450px; border: 1px solid var(--border); box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); }
-        .ia-hint { color: var(--success); font-size: 0.8rem; margin: 8px 0; font-weight: 600; min-height: 1.2rem; }
-        input, select, textarea { width: 100%; padding: 12px; background: #020617; border: 1px solid var(--border); color: white; border-radius: 8px; margin-bottom: 12px; outline: none; }
-        input:focus { border-color: var(--accent); }
+        /* Modal */
+        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); align-items: center; justify-content: center; z-index: 10000; backdrop-filter: blur(4px); }
+        .modal-box { background: var(--card); padding: 35px; border-radius: 24px; width: 460px; border: 1px solid var(--border); }
+        input, select, textarea { width: 100%; padding: 14px; background: #020617; border: 1px solid var(--border); color: white; border-radius: 10px; margin-bottom: 15px; outline: none; }
+        .ia-label { color: var(--success); font-size: 0.8rem; margin-bottom: 10px; font-weight: 600; min-height: 1.2rem; }
     </style>
 </head>
 <body>
 
-<nav>
-    <div class="logo"><i data-lucide="chef-hat"></i> BUFFET RIO</div>
-    <button class="btn-add-main" onclick="abrirModal()">➕ CADASTRAR ITEM</button>
-    <div style="font-size:0.7rem; color:var(--muted); margin-bottom: 10px;">SELECIONAR ESTOQUE</div>
-    <button class="nav-btn" id="btn-C1" onclick="fluxoUnidade('C1', 'Estante')"><i data-lucide="box"></i> Câmara 01</button>
-    <button class="nav-btn" id="btn-C2" onclick="fluxoUnidade('C2', 'Estante')"><i data-lucide="box"></i> Câmara 02</button>
-    <button class="nav-btn" id="btn-F1" onclick="fluxoUnidade('F1', 'Gaveta')"><i data-lucide="snowflake"></i> Freezer 01</button>
-    <button class="nav-btn" id="btn-F2" onclick="fluxoUnidade('F2', 'Gaveta')"><i data-lucide="snowflake"></i> Freezer 02</button>
-    <button class="nav-btn" id="btn-EQ" onclick="fluxoUnidade('EQ', 'Setor')"><i data-lucide="zap"></i> Equipamentos</button>
-</nav>
+<!-- TELA DE LOGIN -->
+<div id="login-screen">
+    <div class="login-box">
+        <div style="background:#1e293b; width:60px; height:60px; border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 20px;">
+            <i data-lucide="lock" style="color:var(--accent)"></i>
+        </div>
+        <h2 style="margin:0 0 10px 0;">Acesso Equipe</h2>
+        <p style="color:var(--muted); font-size:0.9rem; margin-bottom:25px;">Buffet Rio - Janeiro 2026</p>
+        <input type="password" id="pass-field" placeholder="Senha do Buffet" style="text-align:center; font-size:1.2rem;">
+        <button onclick="fazerLogin()" class="btn-add-main" style="width:100%">ENTRAR NO SISTEMA</button>
+    </div>
+</div>
 
-<main>
-    <div id="bread" style="margin-bottom:10px; color:var(--muted); font-size:0.8rem;"><span onclick="location.reload()" style="cursor:pointer">Home</span></div>
-    <h1 id="title">Painel de Controle</h1>
-    <div id="content"></div>
-</main>
+<!-- SISTEMA PRINCIPAL -->
+<div id="app-interface">
+    <nav>
+        <div class="logo"><i data-lucide="chef-hat"></i> BUFFET RIO</div>
+        <button class="btn-add-main" onclick="abrirModal()">➕ NOVO CADASTRO</button>
+        
+        <div style="font-size:0.7rem; color:var(--muted); margin: 20px 0 10px; font-weight:bold;">ESTOQUES FÍSICOS</div>
+        <button class="nav-btn" id="btn-C1" onclick="irUnidade('C1', 'Estante')"><i data-lucide="box"></i> Câmara 01</button>
+        <button class="nav-btn" id="btn-C2" onclick="irUnidade('C2', 'Estante')"><i data-lucide="box"></i> Câmara 02</button>
+        <button class="nav-btn" id="btn-F1" onclick="irUnidade('F1', 'Gaveta')"><i data-lucide="snowflake"></i> Freezer 01</button>
+        <button class="nav-btn" id="btn-F2" onclick="irUnidade('F2', 'Gaveta')"><i data-lucide="snowflake"></i> Freezer 02</button>
+        <button class="nav-btn" id="btn-EQ" onclick="irUnidade('EQ', 'Setor')"><i data-lucide="zap"></i> Equipamentos</button>
 
-<!-- Modal -->
+        <div class="qr-area">
+            <div class="qr-code">
+                <img id="qr-img" src="" alt="QR Access" style="width:100%; display:block;">
+            </div>
+            <p style="font-size:0.65rem; color:var(--muted); margin-top:10px;">ESCANEIE PARA COMPARTILHAR</p>
+        </div>
+    </nav>
+
+    <main>
+        <input type="text" class="search-box" id="global-search" placeholder="🔍 Buscar qualquer item ou equipamento..." oninput="realizarBusca(this.value)">
+        <div id="bread" style="color:var(--muted); font-size:0.85rem; margin-bottom:15px;"><span onclick="location.reload()" style="cursor:pointer">Home</span></div>
+        <h1 id="view-title">Dashboard Operacional</h1>
+        <div id="view-content"></div>
+    </main>
+</div>
+
+<!-- MODAL CADASTRO -->
 <div id="modal" class="modal">
     <div class="modal-box">
-        <h3 style="margin:0 0 15px 0;">Novo Cadastro</h3>
-        <input type="text" id="f-nome" placeholder="Nome (Ex: Carne 3)" oninput="detectarIA(this.value)">
-        <div id="ia-hint" class="ia-hint"></div>
+        <h2 style="margin-top:0;">Novo Item</h2>
+        <input type="text" id="f-nome" placeholder="Nome do Item (Ex: Carne 3)" oninput="ajudaIA(this.value)">
+        <div id="ia-msg" class="ia-label"></div>
         <select id="f-uni">
             <option value="C1">Câmara 01</option><option value="C2">Câmara 02</option>
             <option value="F1">Freezer 01</option><option value="F2">Freezer 02</option>
             <option value="EQ">Equipamentos</option>
         </select>
-        <input type="number" id="f-num" placeholder="Número da Posição (Estante/Gaveta)">
-        <textarea id="f-info" placeholder="Detalhes Técnicos, Voltagem ou Observações Gerais"></textarea>
-        <button onclick="salvar()" class="btn-add-main" style="width:100%">SALVAR NO SISTEMA</button>
-        <button onclick="abrirModal()" style="background:none; border:none; color:var(--muted); width:100%; margin-top:10px; cursor:pointer;">Cancelar</button>
+        <input type="number" id="f-num" placeholder="Nº da Estante ou Gaveta">
+        <textarea id="f-info" placeholder="Info Eletrônica, Voltagem ou Observações" style="height:80px;"></textarea>
+        <button onclick="salvar()" class="btn-add-main" style="width:100%">SALVAR NO ESTOQUE</button>
+        <button onclick="abrirModal()" style="background:none; border:none; color:var(--muted); width:100%; margin-top:12px; cursor:pointer;">Cancelar</button>
     </div>
 </div>
 
 <script>
-    let db = JSON.parse(localStorage.getItem('buffet_rio_pro_v1')) || [];
+    // --- CONFIGURAÇÃO ---
+    const SENHA_MESTRA = "1234"; // DEFINA SUA SENHA AQUI
+    let db = JSON.parse(localStorage.getItem('buffet_rio_db_vFinal')) || [];
     let state = { uni: "", tipo: "", num: "" };
 
-    const regras = {
-        'C1': ['carne', 'queijo', 'leite', 'picanha', 'manteiga'],
-        'F1': ['gelo', 'sorvete', 'congelado', 'polpa', 'peixe', 'camarao'],
-        'EQ': ['forno', 'maquina', 'fritadeira', 'batedeira', 'fogao']
-    };
-
-    function detectarIA(val) {
-        const v = val.toLowerCase();
-        const hint = document.getElementById('ia-hint');
-        const numInput = document.getElementById('f-num');
-        const uniSelect = document.getElementById('f-uni');
-        
-        let detectado = false;
-        
-        // 1. Detectar Grupo
-        for (let r in regras) {
-            if (regras[r].some(p => v.includes(p))) {
-                uniSelect.value = r;
-                detectado = true;
-            }
-        }
-        
-        // 2. Detectar Número
-        const match = v.match(/\d+/);
-        if (match) { 
-            numInput.value = match[0];
-            detectado = true;
-        }
-
-        if(detectado) {
-            const nomeUni = uniSelect.options[uniSelect.selectedIndex].text;
-            hint.innerText = `✨ IA: Localizar em ${nomeUni}, posição ${numInput.value || '?'}`;
-        } else {
-            hint.innerText = "";
-        }
+    // --- LOGIN ---
+    function fazerLogin() {
+        if(document.getElementById('pass-field').value === SENHA_MESTRA) {
+            document.getElementById('login-screen').style.display = 'none';
+            document.getElementById('app-interface').style.display = 'flex';
+            document.getElementById('qr-img').src = `https://api.qrserver.com{window.location.href}`;
+            lucide.createIcons();
+        } else { alert("Senha incorreta!"); }
     }
 
-    function fluxoUnidade(u, t) {
+    // --- IA DE DETECÇÃO ---
+    function ajudaIA(val) {
+        const v = val.toLowerCase();
+        const hint = document.getElementById('ia-msg');
+        const numIn = document.getElementById('f-num');
+        const uniSel = document.getElementById('f-uni');
+        
+        const regras = { 'C1': ['carne','queijo','leite','frio'], 'F1': ['gelo','sorvete','congelado','polpa','peixe'], 'EQ': ['forno','maquina','batedeira','mixer','eletro'] };
+        for(let r in regras) { if(regras[r].some(p => v.includes(p))) uniSel.value = r; }
+        
+        const n = v.match(/\d+/);
+        if(n) { numIn.value = n; hint.innerText = `✨ IA: Localizar em ${uniSel.options[uniSel.selectedIndex].text}, nº ${n}`; }
+        else { hint.innerText = ""; }
+    }
+
+    // --- NAVEGAÇÃO ---
+    function irUnidade(u, t) {
         state.uni = u; state.tipo = t; state.num = "";
         document.querySelectorAll('.nav-btn').forEach(b => b.classList.remove('active'));
         document.getElementById('btn-'+u).classList.add('active');
@@ -123,72 +151,69 @@
     }
 
     function render() {
-        const content = document.getElementById('content');
-        const title = document.getElementById('title');
-        if (!state.uni) { content.innerHTML = "Escolha um estoque no menu lateral para começar."; return; }
+        const content = document.getElementById('view-content');
+        const title = document.getElementById('view-title');
+        if(!state.uni) { content.innerHTML = "Selecione uma unidade para ver o mapa."; return; }
 
-        if (!state.num) {
+        if(!state.num) {
             title.innerText = `Mapa: ${state.uni}`;
             let html = '<div class="grid-num">';
             for(let i=1; i<=12; i++) {
                 const total = db.filter(x => x.uni === state.uni && x.num == i).length;
                 html += `<div class="box-num" onclick="state.num=${i};render()">
-                            <small>${state.tipo}</small><br><b>${i}</b><br>
-                            <span style="font-size:0.7rem; color:var(--accent)">${total} itens</span>
+                            <small>${state.tipo}</small><br><b style="font-size:1.3rem">${i}</b><br>
+                            <span style="color:var(--accent); font-size:0.75rem">${total} itens</span>
                          </div>`;
             }
             content.innerHTML = html + '</div>';
         } else {
             title.innerText = `${state.uni} - ${state.tipo} ${state.num}`;
             const itens = db.filter(x => x.uni === state.uni && x.num == state.num);
-            let html = `<table><thead><tr><th>Item</th><th>Quantidade</th><th>Especificações</th><th>Ação</th></tr></thead><tbody>`;
+            let html = `<table><thead><tr><th>Item</th><th>Qtd</th><th>Especificações</th><th>Ação</th></tr></thead><tbody>`;
             itens.forEach(p => {
-                html += `<tr>
-                    <td><b>${p.nome}</b></td>
-                    <td><b>${p.qtd}</b></td>
-                    <td><div class="info-chip">${p.info || '-'}</div></td>
-                    <td>
-                        <button onclick="mudar(${p.id},1)">+</button>
-                        <button onclick="mudar(${p.id},-1)">-</button>
-                    </td></tr>`;
+                html += `<tr><td><b>${p.nome}</b></td>
+                    <td><button class="btn-qty" onclick="mudar(${p.id},1)">+</button> <b style="margin:0 10px">${p.qtd}</b> <button class="btn-qty" onclick="mudar(${p.id},-1)">-</button></td>
+                    <td><small style="color:var(--muted)">${p.info || '-'}</small></td>
+                    <td><button class="btn-del" onclick="excluir(${p.id})"><i data-lucide="trash-2"></i></button></td></tr>`;
             });
-            content.innerHTML = html + '</tbody></table><button onclick="state.num=\'\';render()" style="margin-top:20px; background:none; border:1px solid var(--border); color:white; padding:10px; border-radius:8px; cursor:pointer;">Voltar ao Mapa</button>';
+            content.innerHTML = html + '</tbody></table><button onclick="state.num=\'\';render()" style="margin-top:20px; background:none; border:1px solid var(--border); color:white; padding:10px; border-radius:10px; cursor:pointer;">Voltar ao Mapa</button>';
         }
         lucide.createIcons();
     }
 
-    function mudar(id, v) {
-        const i = db.find(x => x.id === id);
-        i.qtd = Math.max(0, i.qtd + v);
-        localStorage.setItem('buffet_rio_pro_v1', JSON.stringify(db));
-        render();
+    function realizarBusca(v) {
+        if(!v) { render(); return; }
+        const r = db.filter(i => i.nome.toLowerCase().includes(v.toLowerCase()));
+        let html = `<table><thead><tr><th>Item</th><th>Local</th><th>Qtd</th><th>Ação</th></tr></thead><tbody>`;
+        r.forEach(p => { html += `<tr><td><b>${p.nome}</b></td><td>${p.uni} - Nº ${p.num}</td><td>${p.qtd}</td><td><button class="btn-del" onclick="excluir(${p.id})"><i data-lucide="trash-2"></i></button></td></tr>`; });
+        document.getElementById('view-content').innerHTML = html + "</tbody></table>";
+        lucide.createIcons();
     }
+
+    function mudar(id, v) { const i = db.find(x => x.id === id); i.qtd = Math.max(0, i.qtd + v); salvarDB(); }
+    function excluir(id) { if(confirm("Apagar permanentemente?")) { db = db.filter(x => x.id !== id); salvarDB(); } }
+    function salvarDB() { localStorage.setItem('buffet_rio_db_vFinal', JSON.stringify(db)); render(); }
 
     function abrirModal() {
         const m = document.getElementById('modal');
         m.style.display = (m.style.display === 'flex') ? 'none' : 'flex';
         if(m.style.display === 'flex') {
+            document.getElementById('f-nome').value = ""; document.getElementById('f-num').value = ""; 
+            document.getElementById('f-info').value = ""; document.getElementById('ia-msg').innerText = "";
             document.getElementById('f-nome').focus();
-            document.getElementById('ia-hint').innerText = "";
         }
     }
 
     function salvar() {
         const nome = document.getElementById('f-nome').value;
-        if(!nome) return alert("Digite o nome do item");
-        db.push({
-            id: Date.now(),
-            nome: nome,
-            uni: document.getElementById('f-uni').value,
-            num: document.getElementById('f-num').value,
-            info: document.getElementById('f-info').value,
-            qtd: 0
-        });
-        localStorage.setItem('buffet_rio_pro_v1', JSON.stringify(db));
-        abrirModal(); render();
+        if(!nome) return alert("Nome obrigatório");
+        db.push({ id: Date.now(), nome: nome, uni: document.getElementById('f-uni').value, num: document.getElementById('f-num').value, info: document.getElementById('f-info').value, qtd: 0 });
+        salvarDB(); abrirModal();
     }
+
     render();
 </script>
 </body>
 </html>
+
 
