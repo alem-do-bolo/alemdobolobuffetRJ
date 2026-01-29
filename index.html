@@ -3,45 +3,46 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Buffet Rio - Inteligência de Localização</title>
+    <title>Buffet Rio - Inteligência de Estoque</title>
     <script src="https://unpkg.com"></script>
     <style>
-        :root { --bg: #020617; --side: #09090b; --card: #0f172a; --accent: #3b82f6; --text: #f8fafc; --muted: #94a3b8; --border: #1e293b; }
+        :root { --bg: #020617; --side: #09090b; --card: #0f172a; --accent: #3b82f6; --text: #f8fafc; --muted: #94a3b8; --border: #1e293b; --success: #10b981; }
         * { box-sizing: border-box; transition: all 0.2s; font-family: 'Inter', sans-serif; }
         body { margin: 0; background: var(--bg); color: var(--text); display: flex; height: 100vh; overflow: hidden; }
 
-        /* Sidebar */
+        /* Menu Lateral */
         nav { width: 280px; background: var(--side); border-right: 1px solid var(--border); padding: 20px; display: flex; flex-direction: column; }
         .logo { font-weight: 700; color: var(--accent); margin-bottom: 30px; display: flex; align-items: center; gap: 10px; }
-        .btn-add { background: var(--accent); color: white; border: none; padding: 12px; border-radius: 8px; cursor: pointer; font-weight: bold; width: 100%; }
+        .btn-add-main { background: var(--accent); color: white; border: none; padding: 12px; border-radius: 8px; cursor: pointer; font-weight: bold; margin-bottom: 20px; }
         .nav-btn { width: 100%; padding: 12px; margin-bottom: 5px; background: transparent; border: none; color: var(--muted); text-align: left; border-radius: 8px; cursor: pointer; display: flex; gap: 10px; }
         .nav-btn.active { background: #1e293b; color: white; border-left: 4px solid var(--accent); }
 
-        /* Principal */
+        /* Main Content */
         main { flex-grow: 1; padding: 40px; overflow-y: auto; }
         .grid-num { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 15px; }
         .box-num { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 20px; text-align: center; cursor: pointer; }
         .box-num:hover { border-color: var(--accent); transform: scale(1.05); }
 
         /* Tabela */
-        table { width: 100%; background: var(--card); border-radius: 12px; border-collapse: collapse; overflow: hidden; }
+        table { width: 100%; background: var(--card); border-radius: 12px; border-collapse: collapse; margin-top: 20px; }
         th { text-align: left; padding: 15px; background: #1e293b; color: var(--muted); font-size: 0.75rem; }
         td { padding: 15px; border-bottom: 1px solid var(--border); }
-        .info-tag { font-size: 0.75rem; color: var(--muted); background: #1e293b; padding: 4px 8px; border-radius: 4px; border-left: 3px solid var(--accent); }
+        .info-chip { font-size: 0.75rem; color: var(--muted); background: #1e293b; padding: 5px 10px; border-radius: 4px; border-left: 3px solid var(--accent); }
 
         /* Modal Inteligente */
-        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); align-items: center; justify-content: center; z-index: 100; }
-        .modal-box { background: var(--card); padding: 30px; border-radius: 20px; width: 450px; border: 1px solid var(--border); }
-        input, select, textarea { width: 100%; padding: 12px; background: #020617; border: 1px solid var(--border); color: white; border-radius: 8px; margin-bottom: 12px; }
-        .hint { font-size: 0.75rem; color: #10b981; margin-bottom: 10px; font-style: italic; }
+        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); align-items: center; justify-content: center; z-index: 1000; }
+        .modal-box { background: var(--card); padding: 30px; border-radius: 20px; width: 450px; border: 1px solid var(--border); box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5); }
+        .ia-hint { color: var(--success); font-size: 0.8rem; margin: 8px 0; font-weight: 600; min-height: 1.2rem; }
+        input, select, textarea { width: 100%; padding: 12px; background: #020617; border: 1px solid var(--border); color: white; border-radius: 8px; margin-bottom: 12px; outline: none; }
+        input:focus { border-color: var(--accent); }
     </style>
 </head>
 <body>
 
 <nav>
     <div class="logo"><i data-lucide="chef-hat"></i> BUFFET RIO</div>
-    <button class="btn-add" onclick="abrirModal()">➕ CADASTRAR ITEM</button>
-    <div style="font-size:0.7rem; color:var(--muted); margin: 20px 0 10px;">ESTOQUES FÍSICOS</div>
+    <button class="btn-add-main" onclick="abrirModal()">➕ CADASTRAR ITEM</button>
+    <div style="font-size:0.7rem; color:var(--muted); margin-bottom: 10px;">SELECIONAR ESTOQUE</div>
     <button class="nav-btn" id="btn-C1" onclick="fluxoUnidade('C1', 'Estante')"><i data-lucide="box"></i> Câmara 01</button>
     <button class="nav-btn" id="btn-C2" onclick="fluxoUnidade('C2', 'Estante')"><i data-lucide="box"></i> Câmara 02</button>
     <button class="nav-btn" id="btn-F1" onclick="fluxoUnidade('F1', 'Gaveta')"><i data-lucide="snowflake"></i> Freezer 01</button>
@@ -50,53 +51,67 @@
 </nav>
 
 <main>
-    <div id="bread" style="margin-bottom:10px; color:var(--muted); font-size:0.8rem;"><b onclick="location.reload()" style="cursor:pointer">Home</b></div>
+    <div id="bread" style="margin-bottom:10px; color:var(--muted); font-size:0.8rem;"><span onclick="location.reload()" style="cursor:pointer">Home</span></div>
     <h1 id="title">Painel de Controle</h1>
     <div id="content"></div>
 </main>
 
+<!-- Modal -->
 <div id="modal" class="modal">
     <div class="modal-box">
-        <h3 style="margin-top:0">Novo Cadastro Inteligente</h3>
-        <input type="text" id="f-nome" placeholder="Nome do Item (Ex: Carne Estante 3)" oninput="autodetectar(this.value)">
-        <div id="ia-hint" class="hint"></div>
+        <h3 style="margin:0 0 15px 0;">Novo Cadastro</h3>
+        <input type="text" id="f-nome" placeholder="Nome (Ex: Carne 3)" oninput="detectarIA(this.value)">
+        <div id="ia-hint" class="ia-hint"></div>
         <select id="f-uni">
             <option value="C1">Câmara 01</option><option value="C2">Câmara 02</option>
             <option value="F1">Freezer 01</option><option value="F2">Freezer 02</option>
             <option value="EQ">Equipamentos</option>
         </select>
-        <input type="number" id="f-num" placeholder="Nº da Estante ou Gaveta">
-        <textarea id="f-info" placeholder="Detalhes (Voltagem, Eletrônica, Marca ou Observações Gerais)"></textarea>
-        <button onclick="salvar()" class="btn-add">SALVAR NO SISTEMA</button>
+        <input type="number" id="f-num" placeholder="Número da Posição (Estante/Gaveta)">
+        <textarea id="f-info" placeholder="Detalhes Técnicos, Voltagem ou Observações Gerais"></textarea>
+        <button onclick="salvar()" class="btn-add-main" style="width:100%">SALVAR NO SISTEMA</button>
         <button onclick="abrirModal()" style="background:none; border:none; color:var(--muted); width:100%; margin-top:10px; cursor:pointer;">Cancelar</button>
     </div>
 </div>
 
 <script>
-    let db = JSON.parse(localStorage.getItem('buffet_rio_ai')) || [];
+    let db = JSON.parse(localStorage.getItem('buffet_rio_pro_v1')) || [];
     let state = { uni: "", tipo: "", num: "" };
 
     const regras = {
-        'C1': ['carne', 'queijo', 'leite', 'frio'],
-        'F1': ['sorvete', 'congelado', 'polpa', 'gelo'],
-        'EQ': ['forno', 'maquina', 'liquidificador', 'batedeira']
+        'C1': ['carne', 'queijo', 'leite', 'picanha', 'manteiga'],
+        'F1': ['gelo', 'sorvete', 'congelado', 'polpa', 'peixe', 'camarao'],
+        'EQ': ['forno', 'maquina', 'fritadeira', 'batedeira', 'fogao']
     };
 
-    function autodetectar(val) {
+    function detectarIA(val) {
         const v = val.toLowerCase();
         const hint = document.getElementById('ia-hint');
         const numInput = document.getElementById('f-num');
         const uniSelect = document.getElementById('f-uni');
-
-        // Detecta Unidade
+        
+        let detectado = false;
+        
+        // 1. Detectar Grupo
         for (let r in regras) {
-            if (regras[r].some(p => v.includes(p))) { uniSelect.value = r; }
+            if (regras[r].some(p => v.includes(p))) {
+                uniSelect.value = r;
+                detectado = true;
+            }
         }
-        // Detecta Número (ex: "Carne 3" -> Estante 3)
+        
+        // 2. Detectar Número
         const match = v.match(/\d+/);
         if (match) { 
             numInput.value = match[0];
-            hint.innerText = `✨ Identificado: ${uniSelect.options[uniSelect.selectedIndex].text} - Posição ${match[0]}`;
+            detectado = true;
+        }
+
+        if(detectado) {
+            const nomeUni = uniSelect.options[uniSelect.selectedIndex].text;
+            hint.innerText = `✨ IA: Localizar em ${nomeUni}, posição ${numInput.value || '?'}`;
+        } else {
+            hint.innerText = "";
         }
     }
 
@@ -110,7 +125,7 @@
     function render() {
         const content = document.getElementById('content');
         const title = document.getElementById('title');
-        if (!state.uni) { content.innerHTML = "Escolha um estoque no menu."; return; }
+        if (!state.uni) { content.innerHTML = "Escolha um estoque no menu lateral para começar."; return; }
 
         if (!state.num) {
             title.innerText = `Mapa: ${state.uni}`;
@@ -126,13 +141,18 @@
         } else {
             title.innerText = `${state.uni} - ${state.tipo} ${state.num}`;
             const itens = db.filter(x => x.uni === state.uni && x.num == state.num);
-            let html = `<table><thead><tr><th>Item</th><th>Quantidade</th><th>Detalhes Técnicos / Gerais</th></tr></thead><tbody>`;
+            let html = `<table><thead><tr><th>Item</th><th>Quantidade</th><th>Especificações</th><th>Ação</th></tr></thead><tbody>`;
             itens.forEach(p => {
-                html += `<tr><td><b>${p.nome}</b></td><td>
-                    <button onclick="mudar(${p.id},-1)">-</button> ${p.qtd} <button onclick="mudar(${p.id},1)">+</button>
-                </td><td><div class="info-tag">${p.info || 'Sem detalhes'}</div></td></tr>`;
+                html += `<tr>
+                    <td><b>${p.nome}</b></td>
+                    <td><b>${p.qtd}</b></td>
+                    <td><div class="info-chip">${p.info || '-'}</div></td>
+                    <td>
+                        <button onclick="mudar(${p.id},1)">+</button>
+                        <button onclick="mudar(${p.id},-1)">-</button>
+                    </td></tr>`;
             });
-            content.innerHTML = html + '</tbody></table><button onclick="state.num=\'\';render()" style="margin-top:20px">Voltar ao Mapa</button>';
+            content.innerHTML = html + '</tbody></table><button onclick="state.num=\'\';render()" style="margin-top:20px; background:none; border:1px solid var(--border); color:white; padding:10px; border-radius:8px; cursor:pointer;">Voltar ao Mapa</button>';
         }
         lucide.createIcons();
     }
@@ -140,25 +160,31 @@
     function mudar(id, v) {
         const i = db.find(x => x.id === id);
         i.qtd = Math.max(0, i.qtd + v);
-        localStorage.setItem('buffet_rio_ai', JSON.stringify(db));
+        localStorage.setItem('buffet_rio_pro_v1', JSON.stringify(db));
         render();
     }
 
     function abrirModal() {
         const m = document.getElementById('modal');
         m.style.display = (m.style.display === 'flex') ? 'none' : 'flex';
+        if(m.style.display === 'flex') {
+            document.getElementById('f-nome').focus();
+            document.getElementById('ia-hint').innerText = "";
+        }
     }
 
     function salvar() {
+        const nome = document.getElementById('f-nome').value;
+        if(!nome) return alert("Digite o nome do item");
         db.push({
             id: Date.now(),
-            nome: document.getElementById('f-nome').value,
+            nome: nome,
             uni: document.getElementById('f-uni').value,
             num: document.getElementById('f-num').value,
             info: document.getElementById('f-info').value,
             qtd: 0
         });
-        localStorage.setItem('buffet_rio_ai', JSON.stringify(db));
+        localStorage.setItem('buffet_rio_pro_v1', JSON.stringify(db));
         abrirModal(); render();
     }
     render();
