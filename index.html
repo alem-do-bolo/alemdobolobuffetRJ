@@ -3,206 +3,229 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Buffet Rio - Inteligência de Estoque</title>
+    <title>Buffet Rio - Sistema de Gestão Inteligente</title>
     <script src="https://unpkg.com"></script>
     <style>
         :root {
-            --bg: #020617; --card: #0f172a; --accent: #3b82f6; 
-            --success: #10b981; --text: #f8fafc; --text-muted: #94a3b8;
-            --border: #1e293b;
+            --background: #030712; --sidebar: #09090b; --card: #0f172a;
+            --accent: #3b82f6; --success: #10b981; --border: #1e293b;
+            --text: #f8fafc; --text-muted: #94a3b8;
         }
-        body { font-family: 'Inter', sans-serif; margin: 0; background: var(--bg); color: var(--text); display: flex; }
+        * { box-sizing: border-box; transition: all 0.2s ease-in-out; }
+        body { font-family: 'Inter', sans-serif; margin: 0; background: var(--background); color: var(--text); display: flex; overflow: hidden; }
 
-        /* Menu Lateral */
-        nav { width: 260px; background: var(--card); height: 100vh; position: fixed; border-right: 1px solid var(--border); padding: 24px; }
-        .logo { font-weight: 700; font-size: 1.2rem; color: var(--accent); margin-bottom: 32px; display: flex; align-items: center; gap: 10px; }
-        .nav-link { 
-            width: 100%; padding: 10px 12px; border: none; background: transparent; color: var(--text-muted);
-            text-align: left; border-radius: 8px; cursor: pointer; display: flex; align-items: center; gap: 12px; margin-bottom: 4px; transition: 0.2s;
+        /* Sidebar Estilo Lovable */
+        nav { width: 280px; background: var(--sidebar); height: 100vh; border-right: 1px solid var(--border); padding: 24px; flex-shrink: 0; }
+        .logo { font-weight: 700; font-size: 1.25rem; color: var(--accent); display: flex; align-items: center; gap: 12px; margin-bottom: 40px; }
+        .nav-item { 
+            width: 100%; padding: 12px; margin-bottom: 6px; background: transparent; border: none; 
+            color: var(--text-muted); text-align: left; border-radius: 8px; cursor: pointer;
+            display: flex; align-items: center; gap: 12px; font-size: 0.95rem;
         }
-        .nav-link:hover, .nav-link.active { background: #1e293b; color: var(--text); }
-        .nav-link.active { border-left: 3px solid var(--accent); }
+        .nav-item:hover, .nav-item.active { background: #1e293b; color: white; }
+        .nav-item.active { border-left: 4px solid var(--accent); background: linear-gradient(90deg, #1e293b 0%, transparent 100%); }
 
-        /* Main Content */
-        main { margin-left: 300px; padding: 40px; width: calc(100% - 300px); }
-        .breadcrumb { font-size: 0.9rem; color: var(--text-muted); margin-bottom: 24px; cursor: pointer; }
-        .breadcrumb span { color: var(--accent); }
+        /* Main Content Area */
+        main { flex-grow: 1; height: 100vh; overflow-y: auto; padding: 40px; }
+        .header-section { margin-bottom: 32px; }
+        .breadcrumb { font-size: 0.85rem; color: var(--text-muted); margin-bottom: 8px; display: flex; gap: 8px; cursor: pointer; }
+        .breadcrumb span:hover { color: var(--accent); }
 
-        /* Cards Visuais */
-        .grid-visual { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 20px; }
-        .card-setor { 
-            background: var(--card); border: 1px solid var(--border); padding: 32px 24px; border-radius: 16px;
-            text-align: center; cursor: pointer; transition: 0.3s;
+        /* Grid de Pastas (Busca Visual) */
+        .grid-folders { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 20px; }
+        .folder-card { 
+            background: var(--card); border: 1px solid var(--border); border-radius: 16px; padding: 32px 24px;
+            text-align: center; cursor: pointer; position: relative;
         }
-        .card-setor:hover { border-color: var(--accent); transform: translateY(-4px); }
+        .folder-card:hover { border-color: var(--accent); transform: translateY(-4px); background: #1e293b; }
+        .folder-icon { width: 50px; height: 50px; background: #1e293b; border-radius: 12px; display: flex; align-items: center; justify-content: center; margin: 0 auto 16px; color: var(--accent); }
 
-        /* Tabela */
-        .table-container { background: var(--card); border: 1px solid var(--border); border-radius: 16px; overflow: hidden; }
-        table { width: 100%; border-collapse: collapse; }
-        th { background: #1e293b; padding: 16px; text-align: left; font-size: 0.75rem; color: var(--text-muted); }
+        /* Tabela e Busca */
+        .search-bar { width: 100%; max-width: 400px; padding: 10px 16px; background: var(--card); border: 1px solid var(--border); border-radius: 8px; color: white; margin-bottom: 24px; }
+        .table-view { background: var(--card); border: 1px solid var(--border); border-radius: 12px; width: 100%; border-collapse: collapse; overflow: hidden; }
+        th { text-align: left; padding: 16px; background: #1e293b; color: var(--text-muted); font-size: 0.75rem; text-transform: uppercase; }
         td { padding: 16px; border-bottom: 1px solid var(--border); }
+        .info-chip { font-size: 0.75rem; background: #020617; border: 1px solid var(--border); padding: 4px 8px; border-radius: 4px; color: var(--text-muted); display: inline-block; margin-top: 4px; border-left: 3px solid var(--accent); }
 
-        /* Modal e Form */
-        #modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); z-index: 1000; align-items: center; justify-content: center; }
-        .modal-content { background: var(--card); width: 450px; padding: 32px; border-radius: 20px; border: 1px solid var(--border); }
-        input, select, textarea { 
-            width: 100%; padding: 12px; background: #1e293b; border: 1px solid var(--border); border-radius: 8px; color: white; margin-top: 12px; box-sizing: border-box;
-        }
-        .btn-primary { background: var(--accent); color: white; border: none; padding: 12px; border-radius: 8px; width: 100%; margin-top: 20px; cursor: pointer; font-weight: 600; }
-        .sugestao { font-size: 0.75rem; color: var(--success); margin-top: 5px; font-style: italic; }
+        /* Botão e Modal */
+        .btn-add { background: var(--accent); color: white; border: none; padding: 12px 24px; border-radius: 8px; font-weight: 600; cursor: pointer; width: 100%; margin-bottom: 30px; }
+        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.8); z-index: 1000; align-items: center; justify-content: center; backdrop-filter: blur(4px); }
+        .modal-box { background: var(--card); width: 480px; padding: 32px; border-radius: 20px; border: 1px solid var(--border); }
+        .form-group { margin-bottom: 16px; }
+        label { display: block; font-size: 0.85rem; color: var(--text-muted); margin-bottom: 6px; }
+        input, select, textarea { width: 100%; padding: 12px; background: #020617; border: 1px solid var(--border); border-radius: 8px; color: white; outline: none; }
+        input:focus { border-color: var(--accent); }
     </style>
 </head>
 <body>
 
 <nav>
     <div class="logo"><i data-lucide="chef-hat"></i> BUFFET RIO</div>
-    <button class="btn-primary" onclick="abrirModal()">➕ NOVO CADASTRO</button>
+    <button class="btn-add" onclick="toggleModal()">➕ NOVO ITEM</button>
 
-    <p style="font-size: 0.7rem; color: var(--text-muted); margin-top: 30px;">NAVEGAÇÃO</p>
-    <button class="nav-link" id="link-Câmara" onclick="navegar('Câmara')"><i data-lucide="refrigerator"></i> Câmaras</button>
-    <button class="nav-link" id="link-Freezer" onclick="navegar('Freezer')"><i data-lucide="snowflake"></i> Freezers</button>
-    <button class="nav-link" id="link-Equipamento" onclick="navegar('Equipamento')"><i data-lucide="zap"></i> Equipamentos</button>
-    <button class="nav-link" id="link-Material" onclick="navegar('Material')"><i data-lucide="package"></i> Materiais</button>
+    <div style="font-size: 0.7rem; color: var(--text-muted); margin: 20px 0 10px;">GESTÃO FÍSICA</div>
+    <button class="nav-item" id="nav-Câmara" onclick="fluxoCat('Câmara')"><i data-lucide="box"></i> Câmaras</button>
+    <button class="nav-item" id="nav-Freezer" onclick="fluxoCat('Freezer')"><i data-lucide="snowflake"></i> Freezers</button>
+    <button class="nav-item" id="nav-Equipamento" onclick="fluxoCat('Equipamento')"><i data-lucide="zap"></i> Equipamentos</button>
+    <button class="nav-item" id="nav-Material" onclick="fluxoCat('Material')"><i data-lucide="package"></i> Materiais</button>
 </nav>
 
 <main>
-    <div id="breadcrumb" class="breadcrumb" onclick="resetar()">Home</div>
-    <h1 id="view-title">Mapa de Gestão</h1>
-    <div id="view-content"></div>
+    <div class="header-section">
+        <div id="breadcrumb" class="breadcrumb" onclick="fluxoReset()">Home</div>
+        <h1 id="main-title">Dashboard Operacional</h1>
+    </div>
+
+    <div id="dynamic-content">
+        <!-- O conteúdo flui aqui -->
+    </div>
 </main>
 
-<!-- Modal Cadastro Inteligente -->
-<div id="modal">
-    <div class="modal-content">
-        <h3>Novo Item</h3>
-        <input type="text" id="add-nome" placeholder="Nome do Item (Ex: Carne, Forno...)" oninput="identificarGrupo(this.value)">
-        <div id="sugestao-label" class="sugestao"></div>
-        
-        <select id="add-cat">
-            <option value="Câmara">Câmara</option>
-            <option value="Freezer">Freezer</option>
-            <option value="Equipamento">Equipamento</option>
-            <option value="Material">Material</option>
-        </select>
-        
-        <input type="text" id="add-setor" placeholder="Estante, Gaveta ou Bancada">
-        <input type="number" id="add-qtd" placeholder="Qtd Inicial">
-        <textarea id="add-info" placeholder="Info Técnica (Ex: 220V, Validade, Lote)"></textarea>
-        
-        <button class="btn-primary" onclick="salvar()">SALVAR NO ESTOQUE</button>
-        <button onclick="abrirModal()" style="background:none; border:none; color:var(--text-muted); width:100%; margin-top:12px; cursor:pointer;">Cancelar</button>
+<div id="modal" class="modal">
+    <div class="modal-box">
+        <h2 style="margin-top:0">Cadastrar Item</h2>
+        <div class="form-group">
+            <label>Nome do Item</label>
+            <input type="text" id="f-nome" oninput="iaGrupo(this.value)" placeholder="Ex: Forno, Carne...">
+            <div id="ia-hint" style="font-size:0.75rem; color:var(--success); margin-top:4px; height:15px"></div>
+        </div>
+        <div class="form-group">
+            <label>Grupo Automático</label>
+            <select id="f-cat">
+                <option value="Câmara">Câmara</option>
+                <option value="Freezer">Freezer</option>
+                <option value="Equipamento">Equipamento</option>
+                <option value="Material">Material</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label>Local (Pasta/Prateleira)</label>
+            <input type="text" id="f-setor" placeholder="Ex: Prateleira A1">
+        </div>
+        <div class="form-group">
+            <label>Informações Técnicas / Eletrônicas</label>
+            <textarea id="f-info" placeholder="Ex: 220V, Manutenção em Julho..."></textarea>
+        </div>
+        <button class="btn-add" onclick="salvarItem()">SALVAR NO SISTEMA</button>
+        <button onclick="toggleModal()" style="background:none; border:none; color:var(--text-muted); width:100%; cursor:pointer;">Cancelar</button>
     </div>
 </div>
 
 <script>
-    let db = JSON.parse(localStorage.getItem('buffet_rio_v5')) || [];
+    let db = JSON.parse(localStorage.getItem('buffet_lovable_v1')) || [];
+    let state = { cat: "", setor: "", search: "" };
 
-    // LÓGICA DE IDENTIFICAÇÃO AUTOMÁTICA
     const dicionario = {
-        'Câmara': ['carne', 'queijo', 'leite', 'frango', 'peixe', 'presunto', 'manteiga', 'iogurte', 'picanha', 'file'],
-        'Freezer': ['sorvete', 'gelo', 'polpa', 'congelado', 'camarao', 'batata frita', 'açai'],
-        'Equipamento': ['forno', 'fogao', 'fritadeira', 'liquidificador', 'batedeira', 'geladeira', 'maquina', 'estufa', 'mixer'],
-        'Material': ['prato', 'copo', 'taca', 'talher', 'garfo', 'faca', 'colher', 'guardanapo', 'travessa', 'toalha']
+        'Câmara': ['carne', 'queijo', 'leite', 'frango', 'frio', 'presunto'],
+        'Freezer': ['gelo', 'sorvete', 'congelado', 'polpa', 'peixe'],
+        'Equipamento': ['forno', 'fogao', 'maquina', 'eletrico', '220v', '110v', 'batedeira'],
+        'Material': ['prato', 'copo', 'taca', 'talher', 'mesa', 'toalha']
     };
 
-    function identificarGrupo(valor) {
-        const texto = valor.toLowerCase();
-        const label = document.getElementById('sugestao-label');
-        const select = document.getElementById('add-cat');
-        
-        label.innerText = "";
-        
-        for (let grupo in dicionario) {
-            if (dicionario[grupo].some(palavra => texto.includes(palavra))) {
-                select.value = grupo;
-                label.innerText = `✨ Grupo "${grupo}" detectado automaticamente!`;
+    function iaGrupo(val) {
+        const hint = document.getElementById('ia-hint');
+        const select = document.getElementById('f-cat');
+        hint.innerText = "";
+        for (let g in dicionario) {
+            if (dicionario[g].some(p => val.toLowerCase().includes(p))) {
+                select.value = g;
+                hint.innerText = `✨ Grupo ${g} identificado!`;
                 break;
             }
         }
     }
 
-    // NAVEGAÇÃO E RENDERIZAÇÃO
-    let catAtiva = ""; let setorAtivo = "";
-
-    function navegar(c) {
-        catAtiva = c; setorAtivo = "";
-        document.querySelectorAll('.nav-link').forEach(l => l.classList.remove('active'));
-        document.getElementById('link-'+c).classList.add('active');
-        render();
+    function fluxoCat(c) {
+        state.cat = c; state.setor = ""; render();
+        document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+        document.getElementById('nav-'+c).classList.add('active');
     }
 
-    function abrirSetor(s) { setorAtivo = s; render(); }
-    function resetar() { catAtiva = ""; setorAtivo = ""; render(); }
+    function fluxoSetor(s) { state.setor = s; render(); }
+    function fluxoReset() { state.cat = ""; state.setor = ""; render(); }
 
     function render() {
-        const content = document.getElementById('view-content');
-        const title = document.getElementById('view-title');
+        const content = document.getElementById('dynamic-content');
+        const title = document.getElementById('main-title');
         const bread = document.getElementById('breadcrumb');
 
-        if (!catAtiva) {
-            title.innerText = "Painel de Controle Rio";
-            content.innerHTML = `<p style="color:var(--text-muted)">Selecione uma categoria no menu para começar.</p>`;
+        if (!state.cat) {
+            title.innerText = "Bem-vindo, Gestor";
+            content.innerHTML = `<p style="color:var(--text-muted)">Selecione uma categoria física para iniciar a contagem ou busca.</p>`;
             return;
         }
 
-        if (!setorAtivo) {
-            bread.innerHTML = `<span onclick="resetar()">Home</span> / ${catAtiva}`;
-            title.innerText = `Setores: ${catAtiva}`;
-            const setores = [...new Set(db.filter(i => i.cat === catAtiva).map(i => i.setor))];
-            let html = '<div class="grid-visual">';
+        if (!state.setor) {
+            bread.innerHTML = `<span onclick="fluxoReset()">Home</span> / ${state.cat}`;
+            title.innerText = `Pastas de ${state.cat}`;
+            const setores = [...new Set(db.filter(i => i.cat === state.cat).map(i => i.setor))];
+            let html = '<div class="grid-folders">';
             setores.forEach(s => {
-                html += `<div class="card-setor" onclick="abrirSetor('${s}')">
-                            <div style="font-size:2rem; margin-bottom:10px">📂</div>
-                            <b>${s}</b><br><small>${db.filter(i => i.setor === s).length} itens</small>
+                html += `<div class="folder-card" onclick="fluxoSetor('${s}')">
+                            <div class="folder-icon"><i data-lucide="folder"></i></div>
+                            <b>${s}</b><br><small style="color:var(--text-muted)">${db.filter(i => i.setor === s).length} itens</small>
                          </div>`;
             });
-            content.innerHTML = html + (setores.length ? '' : '<p>Nenhum setor cadastrado.</p>') + '</div>';
+            content.innerHTML = html + (setores.length ? '' : '<p>Nenhuma pasta criada.</p>') + '</div>';
         } else {
-            bread.innerHTML = `<span onclick="resetar()">Home</span> / <span onclick="navegar('${catAtiva}')">${catAtiva}</span> / ${setorAtivo}`;
-            title.innerText = setorAtivo;
-            const itens = db.filter(i => i.cat === catAtiva && i.setor === setorAtivo);
-            let html = '<div class="table-container"><table><thead><tr><th>Item</th><th>Qtd</th><th>Info Técnica</th><th>Ação</th></tr></thead><tbody>';
-            itens.forEach(p => {
-                html += `<tr>
-                    <td><b>${p.nome}</b></td>
-                    <td><span style="color:var(--accent); font-weight:bold">${p.qtd}</span></td>
-                    <td><small style="color:var(--text-muted)">${p.info || '-'}</small></td>
-                    <td>
-                        <button onclick="mudar(${p.id}, 1)">+</button>
-                        <button onclick="mudar(${p.id}, -1)">-</button>
-                    </td>
-                </tr>`;
-            });
-            content.innerHTML = html + '</tbody></table></div>';
+            bread.innerHTML = `<span onclick="fluxoReset()">Home</span> / <span onclick="fluxoCat('${state.cat}')">${state.cat}</span> / ${state.setor}`;
+            title.innerText = state.setor;
+            const itens = db.filter(i => i.cat === state.cat && i.setor === state.setor);
+            content.innerHTML = `
+                <input type="text" class="search-bar" placeholder="🔍 Filtrar nesta pasta..." oninput="filtrar(this.value)">
+                <table class="table-view" id="table-itens">
+                    <thead><tr><th>Item</th><th>Qtd</th><th>Dados Técnicos</th><th>Ação</th></tr></thead>
+                    <tbody id="tbody-itens">${gerarLinhas(itens)}</tbody>
+                </table>`;
         }
         lucide.createIcons();
     }
 
-    function mudar(id, v) {
+    function gerarLinhas(lista) {
+        return lista.map(p => `
+            <tr>
+                <td><b>${p.nome}</b></td>
+                <td><b style="color:var(--accent)">${p.qtd}</b></td>
+                <td><div class="info-chip">${p.info || 'N/A'}</div></td>
+                <td>
+                    <button onclick="updateQty(${p.id}, 1)" style="cursor:pointer">+</button>
+                    <button onclick="updateQty(${p.id}, -1)" style="cursor:pointer">-</button>
+                </td>
+            </tr>`).join('');
+    }
+
+    function filtrar(val) {
+        const lista = db.filter(i => i.cat === state.cat && i.setor === state.setor && i.nome.toLowerCase().includes(val.toLowerCase()));
+        document.getElementById('tbody-itens').innerHTML = gerarLinhas(lista);
+    }
+
+    function updateQty(id, v) {
         const i = db.find(x => x.id === id);
         i.qtd = Math.max(0, i.qtd + v);
-        localStorage.setItem('buffet_rio_v5', JSON.stringify(db));
+        localStorage.setItem('buffet_lovable_v1', JSON.stringify(db));
         render();
     }
 
-    function abrirModal() {
+    function toggleModal() {
         const m = document.getElementById('modal');
         m.style.display = (m.style.display === 'flex') ? 'none' : 'flex';
     }
 
-    function salvar() {
+    function salvarItem() {
         db.push({
             id: Date.now(),
-            nome: document.getElementById('add-nome').value,
-            cat: document.getElementById('add-cat').value,
-            setor: document.getElementById('add-setor').value,
-            qtd: parseInt(document.getElementById('add-qtd').value) || 0,
-            info: document.getElementById('add-info').value
+            nome: document.getElementById('f-nome').value,
+            cat: document.getElementById('f-cat').value,
+            setor: document.getElementById('f-setor').value,
+            info: document.getElementById('f-info').value,
+            qtd: 0
         });
-        localStorage.setItem('buffet_rio_v5', JSON.stringify(db));
-        abrirModal(); render();
+        localStorage.setItem('buffet_lovable_v1', JSON.stringify(db));
+        toggleModal(); render();
     }
+
     render();
 </script>
 </body>
 </html>
+
