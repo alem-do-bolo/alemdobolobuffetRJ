@@ -3,45 +3,40 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Buffet Rio - Gestão Total de Estoque</title>
+    <title>Buffet Rio - Estoque Inteligente</title>
     <script src="https://unpkg.com"></script>
     <style>
         :root { --bg: #020617; --side: #09090b; --card: #0f172a; --accent: #3b82f6; --text: #f8fafc; --muted: #94a3b8; --border: #1e293b; --success: #10b981; --danger: #ef4444; }
         * { box-sizing: border-box; transition: all 0.2s; font-family: 'Inter', sans-serif; }
         body { margin: 0; background: var(--bg); color: var(--text); display: flex; height: 100vh; overflow: hidden; }
 
-        /* Sidebar Profissional */
-        nav { width: 300px; background: var(--side); border-right: 1px solid var(--border); padding: 20px; display: flex; flex-direction: column; overflow-y: auto; }
+        nav { width: 280px; background: var(--side); border-right: 1px solid var(--border); padding: 20px; display: flex; flex-direction: column; overflow-y: auto; }
         .logo { font-weight: 700; color: var(--accent); margin-bottom: 25px; display: flex; align-items: center; gap: 10px; font-size: 1.2rem; }
-        .label-cat { font-size: 0.65rem; color: var(--muted); text-transform: uppercase; margin: 15px 0 5px; font-weight: bold; letter-spacing: 1px; }
+        .btn-add { background: var(--accent); color: white; border: none; padding: 12px; border-radius: 8px; cursor: pointer; font-weight: bold; margin-bottom: 20px; width: 100%; }
         .btn-menu { width: 100%; padding: 10px; margin-bottom: 4px; background: transparent; border: none; color: var(--muted); text-align: left; border-radius: 8px; cursor: pointer; display: flex; gap: 10px; font-size: 0.9rem; }
         .btn-menu:hover, .btn-menu.active { background: #1e293b; color: white; }
-        .btn-add { background: var(--accent); color: white; border: none; padding: 12px; border-radius: 8px; cursor: pointer; font-weight: bold; margin-bottom: 20px; width: 100%; }
 
-        /* Grid Visual de Localização */
         main { flex-grow: 1; padding: 40px; overflow-y: auto; }
         .grid-local { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 15px; }
         .box-local { background: var(--card); border: 1px solid var(--border); border-radius: 12px; padding: 25px 10px; text-align: center; cursor: pointer; }
-        .box-local:hover { border-color: var(--accent); transform: scale(1.05); background: #1e293b; }
-        .box-local b { display: block; font-size: 1.3rem; color: white; margin-top: 5px; }
+        .box-local:hover { border-color: var(--accent); transform: scale(1.05); }
 
-        /* Tabelas e Modais */
         table { width: 100%; background: var(--card); border-radius: 12px; border-collapse: collapse; margin-top: 20px; }
         th { text-align: left; padding: 15px; background: #1e293b; color: var(--muted); font-size: 0.75rem; text-transform: uppercase; }
         td { padding: 15px; border-bottom: 1px solid var(--border); }
+        
         .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.9); align-items: center; justify-content: center; z-index: 10000; }
         .modal-box { background: var(--card); padding: 30px; border-radius: 20px; width: 480px; border: 1px solid var(--border); }
         input, select, textarea { width: 100%; padding: 12px; background: #020617; border: 1px solid var(--border); color: white; border-radius: 8px; margin-bottom: 10px; }
-        .ia-verde { color: var(--success); font-weight: bold; font-size: 0.85rem; margin-bottom: 10px; display: block; }
+        .ia-auto { color: var(--success); font-weight: bold; font-size: 0.85rem; margin-bottom: 15px; display: block; border: 1px solid var(--success); padding: 10px; border-radius: 8px; background: rgba(16, 185, 129, 0.1); }
     </style>
 </head>
 <body>
 
-<!-- LOGIN -->
 <div id="login-screen" style="position:fixed; inset:0; background:var(--bg); z-index:99999; display:flex; align-items:center; justify-content:center;">
     <div style="background:var(--card); padding:40px; border-radius:20px; text-align:center; border:1px solid var(--border);">
-        <h2>Buffet Rio - Equipe</h2>
-        <input type="password" id="pass" placeholder="Senha do Buffet" style="text-align:center; margin-bottom:15px; width:100%; padding:12px; background:#020617; color:white; border:1px solid var(--border); border-radius:8px;">
+        <h2>Buffet Rio - Acesso</h2>
+        <input type="password" id="pass" placeholder="Senha" style="text-align:center; margin-bottom:15px; width:100%; padding:12px; background:#020617; color:white; border:1px solid var(--border); border-radius:8px;">
         <button onclick="verificarSenha()" style="width:100%; padding:12px; background:var(--accent); color:white; border:none; border-radius:8px; cursor:pointer; font-weight:bold;">ENTRAR</button>
     </div>
 </div>
@@ -49,76 +44,78 @@
 <div id="app-interface" style="display:none; width:100%;">
     <nav>
         <div class="logo"><i data-lucide="chef-hat"></i> BUFFET RIO</div>
-        <button class="btn-add" onclick="abrirModal()">➕ NOVO ITEM</button>
+        <button class="btn-add" onclick="abrirModal()">➕ ADICIONAR ITEM</button>
         
-        <div class="label-cat">Câmaras (Estantes)</div>
-        <button class="btn-menu" onclick="fluxo('C1', 'Estante', 12)"><i data-lucide="box"></i> Câmara 01</button>
-        <button class="btn-menu" onclick="fluxo('C2', 'Estante', 12)"><i data-lucide="box"></i> Câmara 02</button>
-
-        <div class="label-cat">Freezers (Gavetas)</div>
-        <button class="btn-menu" onclick="fluxo('F1', 'Gaveta', 10)"><i data-lucide="snowflake"></i> Freezer 01</button>
-        <button class="btn-menu" onclick="fluxo('F2', 'Gaveta', 10)"><i data-lucide="snowflake"></i> Freezer 02</button>
-
-        <div class="label-cat">Geladeiras (Gaveta/P)</div>
-        <button class="btn-menu" onclick="fluxo('G1', 'Gaveta/P', 8)"><i data-lucide="refrigerator"></i> Geladeira 01</button>
-        <button class="btn-menu" onclick="fluxo('G2', 'Gaveta/P', 8)"><i data-lucide="refrigerator"></i> Geladeira 02</button>
-        <button class="btn-menu" onclick="fluxo('G3', 'Gaveta/P', 8)"><i data-lucide="refrigerator"></i> Geladeira 03</button>
-        <button class="btn-menu" onclick="fluxo('G4', 'Gaveta/P', 8)"><i data-lucide="refrigerator"></i> Geladeira 04</button>
-
-        <div class="label-cat">Estoque Geral</div>
-        <button class="btn-menu" onclick="fluxo('D', 'D-P', 9)"><i data-lucide="archive"></i> Despensa</button>
-        <button class="btn-menu" onclick="fluxo('S', 'S-P', 9)"><i data-lucide="armchair"></i> Estoque Sala</button>
-        <button class="btn-menu" onclick="fluxo('CO', 'Co-P', 8)"><i data-lucide="cake"></i> Confeitaria</button>
-
-        <div class="label-cat">Resumo</div>
-        <button class="btn-menu" onclick="verResumo()"><i data-lucide="history"></i> Movimentação</button>
-
-        <div style="margin-top:auto; padding:10px; background:white; border-radius:10px; text-align:center;">
-            <img id="qr-img" style="width:100px;">
-            <p style="color:black; font-size:0.5rem; margin:5px 0 0;">ACESSO EQUIPE</p>
-        </div>
+        <button class="btn-menu" onclick="fluxo('C1', 'Estante', 12)">📦 Câmara 01</button>
+        <button class="btn-menu" onclick="fluxo('F1', 'Gaveta', 10)">❄️ Freezer 01</button>
+        <button class="btn-menu" onclick="fluxo('G1', 'Prateleira', 8)">🍦 Geladeira 01</button>
+        <button class="btn-menu" onclick="fluxo('D', 'D-P', 9)">🥖 Despensa</button>
+        <button class="btn-menu" onclick="verResumo()">📜 Log Geral</button>
     </nav>
 
     <main>
-        <div id="bread" style="color:var(--muted); font-size:0.8rem; margin-bottom:10px;"><span onclick="location.reload()" style="cursor:pointer">Home</span></div>
-        <h1 id="title">Painel de Controle</h1>
-        <div id="content">Selecione uma unidade para começar.</div>
+        <h1 id="title">Dashboard</h1>
+        <div id="content">Selecione uma área.</div>
     </main>
 </div>
 
-<!-- MODAL -->
 <div id="modal" class="modal">
     <div class="modal-box">
-        <h3 style="margin-top:0">Cadastro Profissional</h3>
-        <input type="text" id="f-nome" placeholder="Item (Ex: Carne 3)" oninput="ajudaIA(this.value)">
-        <span id="ia-msg" class="ia-verde"></span>
-        <select id="f-uni">
-            <optgroup label="Câmaras"><option value="C1">Câmara 1</option><option value="C2">Câmara 2</option></optgroup>
-            <optgroup label="Freezers"><option value="F1">Freezer 1</option><option value="F2">Freezer 2</option></optgroup>
-            <optgroup label="Geladeiras"><option value="G1">Geladeira 1</option><option value="G2">Geladeira 2</option><option value="G3">Geladeira 3</option><option value="G4">Geladeira 4</option></optgroup>
-            <optgroup label="Estoques"><option value="D">Despensa</option><option value="S">Estoque Sala</option><option value="CO">Confeitaria</option></optgroup>
-        </select>
-        <input type="number" id="f-num" placeholder="Número (Gaveta, Estante ou P)">
-        <input type="number" id="f-qtd" placeholder="Quantidade inicial">
-        <textarea id="f-info" placeholder="Info Técnica / Eletrônica"></textarea>
-        <button onclick="salvar()" class="btn-add">SALVAR NO SISTEMA</button>
+        <h3>Entrada de Mercadoria</h3>
+        <p style="font-size: 0.8rem; color: var(--muted);">Apenas digite o nome. O sistema sabe onde guardar.</p>
+        
+        <input type="text" id="f-nome" placeholder="Ex: Picanha, Sorvete, Queijo..." oninput="rastrearLocal(this.value)">
+        
+        <div id="ia-status" class="ia-auto" style="display:none;">
+            📍 Destino Automático: <span id="ia-destino">---</span>
+        </div>
+
+        <input type="number" id="f-qtd" placeholder="Quantidade">
+        <textarea id="f-info" placeholder="Info Adicional (ex: 220v, Lote)"></textarea>
+
+        <button onclick="salvar()" class="btn-add">CONFIRMAR ENTRADA</button>
         <button onclick="abrirModal()" style="background:none; border:none; color:var(--muted); width:100%; margin-top:10px; cursor:pointer;">Cancelar</button>
     </div>
 </div>
 
 <script>
     const SENHA_MESTRA = "1234";
-    const FIREBASE_URL = "SUA_URL_DO_FIREBASE_AQUI/estoque.json"; // ATENÇÃO: COLOQUE SUA URL AQUI
+    const FIREBASE_URL = "SUA_URL_DO_FIREBASE_AQUI/estoque.json";
+
+    // MAPA DE INTELIGÊNCIA: Nome do item -> [Unidade, Posição]
+    const MAPA_AUTOMATICO = {
+        'picanha': ['C1', 3], 'mignon': ['C1', 3], 'carne': ['C1', 4],
+        'queijo': ['C1', 1], 'presunto': ['C1', 1], 'leite': ['C1', 2],
+        'sorvete': ['F1', 1], 'gelo': ['F1', 2], 'peixe': ['F1', 5], 'camarao': ['F1', 5],
+        'iogurte': ['G1', 1], 'manteiga': ['G1', 1],
+        'arroz': ['D', 1], 'feijao': ['D', 1], 'farinha': ['D', 2]
+    };
 
     let db = { itens: {}, historico: [] };
-    let state = { uni: "", tipo: "", num: "", max: 12 };
+    let localIA = { uni: "C1", num: 1 };
+
+    function rastrearLocal(val) {
+        const v = val.toLowerCase();
+        const status = document.getElementById('ia-status');
+        const destino = document.getElementById('ia-destino');
+        let achou = false;
+
+        for (let chave in MAPA_AUTOMATICO) {
+            if (v.includes(chave)) {
+                localIA.uni = MAPA_AUTOMATICO[chave][0];
+                localIA.num = MAPA_AUTOMATICO[chave][1];
+                destino.innerText = `${localIA.uni} - Posição ${localIA.num}`;
+                status.style.display = "block";
+                achou = true; break;
+            }
+        }
+        if (!achou) { status.style.display = "none"; localIA = { uni: "C1", num: 1 }; }
+    }
 
     async function syncDB() {
-        try {
-            const res = await fetch(FIREBASE_URL);
-            db = await res.json() || { itens: {}, historico: [] };
-            render();
-        } catch (e) { console.log("Erro de conexão"); }
+        const res = await fetch(FIREBASE_URL);
+        db = await res.json() || { itens: {}, historico: [] };
+        render();
     }
 
     async function updateDB() {
@@ -130,49 +127,29 @@
         if(document.getElementById('pass').value === SENHA_MESTRA) {
             document.getElementById('login-screen').style.display = 'none';
             document.getElementById('app-interface').style.display = 'flex';
-            document.getElementById('qr-img').src = `https://api.qrserver.com{encodeURIComponent(window.location.href)}`;
-            lucide.createIcons();
-            syncDB();
-            setInterval(syncDB, 5000);
+            lucide.createIcons(); syncDB();
         } else { alert("Senha incorreta!"); }
     }
 
-    function ajudaIA(val) {
-        const v = val.toLowerCase();
-        const msg = document.getElementById('ia-msg');
-        const numIn = document.getElementById('f-num');
-        const n = v.match(/\d+/);
-        if(n) { numIn.value = n; msg.innerText = `✨ IA: Localizar na posição ${n}`; }
-        else { msg.innerText = ""; }
-    }
-
-    function fluxo(u, t, m) { state.uni = u; state.tipo = t; state.max = m; state.num = ""; render(); }
+    function fluxo(u, t, m) { state = { uni: u, tipo: t, max: m, num: "" }; render(); }
 
     function render() {
         const content = document.getElementById('content');
         if (!state.uni || state.uni === "RESUMO") return;
-
         const lista = Object.values(db.itens || {}).filter(i => i.uni === state.uni);
 
         if (!state.num) {
-            document.getElementById('title').innerText = `Mapa: ${state.uni}`;
             let html = '<div class="grid-local">';
             for(let i=1; i<=state.max; i++) {
                 const total = lista.filter(x => x.num == i).length;
-                html += `<div class="box-local" onclick="state.num=${i};render()">
-                            <small>${state.tipo}</small><b>${i}</b>
-                            <span style="font-size:0.7rem; color:var(--accent)">${total} itens</span>
-                         </div>`;
+                html += `<div class="box-local" onclick="state.num=${i};render()"><b>${i}</b><br><small>${total} itens</small></div>`;
             }
             content.innerHTML = html + '</div>';
         } else {
-            document.getElementById('title').innerText = `${state.tipo} ${state.num} (${state.uni})`;
             const itens = lista.filter(x => x.num == state.num);
-            let html = `<table><tr><th>Item</th><th>Qtd Atual</th><th>Ação</th></tr>`;
+            let html = `<table><tr><th>Item</th><th>Qtd</th><th>Ação</th></tr>`;
             itens.forEach(p => {
-                html += `<tr><td><b>${p.nome}</b><br><small style="color:var(--muted)">${p.info || ''}</small></td>
-                    <td><button onclick="mudar('${p.id}', 1, '${p.nome}')">+</button> <b>${p.qtd}</b> <button onclick="mudar('${p.id}', -1, '${p.nome}')">-</button></td>
-                    <td><button onclick="excluir('${p.id}')">❌</button></td></tr>`;
+                html += `<tr><td>${p.nome}</td><td>${p.qtd}</td><td><button onclick="mudar('${p.id}', 1, '${p.nome}')">+</button> <button onclick="mudar('${p.id}', -1, '${p.nome}')">-</button></td></tr>`;
             });
             content.innerHTML = html + "</table>";
         }
@@ -186,22 +163,18 @@
 
     function verResumo() {
         state.uni = "RESUMO";
-        document.getElementById('title').innerText = "Movimentação em Tempo Real";
-        let html = `<table><tr><th>Data/Hora</th><th>Ação</th><th>Item</th><th>Qtd</th></tr>`;
-        (db.historico || []).slice(0, 40).forEach(h => {
-            html += `<tr><td><small>${h.data}</small></td><td style="color:${h.acao == 'Saída' ? 'var(--danger)' : 'var(--success)'}">${h.acao}</td><td>${h.item}</td><td>${h.qtd}</td></tr>`;
+        document.getElementById('title').innerText = "Resumo Geral";
+        let html = `<table><tr><th>Data</th><th>Ação</th><th>Item</th><th>Qtd</th></tr>`;
+        (db.historico || []).slice(0, 30).forEach(h => {
+            html += `<tr><td><small>${h.data}</small></td><td>${h.acao}</td><td>${h.item}</td><td>${h.qtd}</td></tr>`;
         });
         document.getElementById('content').innerHTML = html + "</table>";
     }
 
-    function excluir(id) { if(confirm("Remover permanentemente para todos?")) { delete db.itens[id]; updateDB(); } }
-
     function abrirModal() {
         const m = document.getElementById('modal');
         m.style.display = (m.style.display === 'flex') ? 'none' : 'flex';
-        if(m.style.display === 'flex') {
-            document.getElementById('f-nome').value = ""; document.getElementById('f-qtd').value = ""; document.getElementById('ia-msg').innerText = "";
-        }
+        document.getElementById('f-nome').value = "";
     }
 
     function salvar() {
@@ -209,12 +182,11 @@
         const nome = document.getElementById('f-nome').value;
         const qtd = parseInt(document.getElementById('f-qtd').value) || 0;
         if(!db.itens) db.itens = {};
-        db.itens[id] = { id, nome, uni: document.getElementById('f-uni').value, num: document.getElementById('f-num').value, info: document.getElementById('f-info').value, qtd };
-        if(!db.historico) db.historico = [];
+        db.itens[id] = { id, nome, uni: localIA.uni, num: localIA.num, qtd, info: document.getElementById('f-info').value };
         db.historico.unshift({ data: new Date().toLocaleString(), acao: "Cadastro", item: nome, qtd });
-        updateDB();
-        abrirModal();
+        updateDB(); abrirModal();
     }
 </script>
 </body>
 </html>
+
