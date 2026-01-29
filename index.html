@@ -75,11 +75,6 @@
 
         <div class="label-cat">📊 Relatórios</div>
         <button class="btn-menu" onclick="verResumo()">Movimentação</button>
-
-        <div style="margin-top:auto; background:white; padding:10px; border-radius:10px; text-align:center;">
-            <img id="qr-img" style="width:100px;">
-            <p style="color:black; font-size:0.5rem; margin-top:5px;">QR ACESSO</p>
-        </div>
     </nav>
 
     <main>
@@ -91,8 +86,7 @@
 <div id="modal" class="modal">
     <div class="modal-box">
         <h3>Entrada Sincronizada</h3>
-        <input type="text" id="f-nome" placeholder="Item (Ex: Picanha, Prato...)" oninput="rastrearIA(this.value)">
-        <div id="ia-box" class="ia-auto" style="display:none;">✨ IA: <span id="ia-dest">---</span></div>
+        <input type="text" id="f-nome" placeholder="Item (Ex: Picanha, Prato...)">
         <select id="f-uni">
             <option value="C1">Câmara 1</option><option value="C2">Câmara 2</option>
             <option value="F1">Freezer 1</option><option value="F2">Freezer 2</option>
@@ -109,121 +103,86 @@
 </div>
 
 <script>
-    const SENHA_MESTRA = "docesalgado"; // COLOQUE SUA SENHA AQUI
-    const FIREBASE_URL = "https://buffet-rio-default-rtdb.firebaseio.com.json";
+    const SENHA_MESTRA = "docesalgado"; 
+    const FIREBASE_URL = "https://buffet-rio-default-rtdb.firebaseio.com";
+    
     let db = { itens: {}, historico: [] };
-    let state = { uni: "", tipo: "", max: 12, num: "" };
+    let state = { uni: "", tipo: "", max: 12 };
 
-    const MAPA_INTELIGENTE = {
-        'picanha': ['C1', 3], 'mignon': ['C1', 3], 'carne': ['C1', 4], 'frango': ['C1', 5],
-        'queijo': ['C1', 1], 'presunto': ['C1', 1], 'leite': ['C1', 2],
-        'sorvete': ['F1', 1], 'gelo': ['F1', 2], 'peixe': ['F1', 5],
-        'iogurte': ['G1', 1], 'suco': ['G1', 2], 'refrigerante': ['G2', 1],
-        'arroz': ['D', 1], 'feijao': ['D', 1], 'prato': ['S', 1], 'taca': ['S', 2],
-        'chocolate': ['CO', 1], 'essencia': ['CO', 4]
-    };
-
-    function rastrearIA(val) {
-        const v = val.toLowerCase();
-        const box = document.getElementById('ia-box');
-        const dest = document.getElementById('ia-dest');
-        const fUni = document.getElementById('f-uni');
-        const fNum = document.getElementById('f-num');
-        let det = false;
-        for (let k in MAPA_INTELIGENTE) {
-            if (v.includes(k)) {
-                fUni.value = MAPA_INTELIGENTE[k][0]; fNum.value = MAPA_INTELIGENTE[k][1];
-                box.style.display = "block"; dest.innerText = `Destino: ${fUni.value} - Posição ${fNum.value}`;
-                det = true; break;
-            }
-        }
-        if(!det) box.style.display = "none";
+    // Sincronização com Firebase
+    async function carregarDados() {
+        try {
+            const res = await fetch(FIREBASE_URL);
+            const data = await res.json();
+            if(data) db = data;
+        } catch(e) { console.error(e); }
     }
 
- async function atualizarEstoque() {
-    await fetch(FIREBASE_URL, {
-        method: 'PUT', // PUT substitui o nó 'estoque' pelo novo objeto 'db'
-        body: JSON.stringify(db), 
-        headers: { 'Content-Type': 'application/json' }
-    });
-}
-
-    }
-
-    async function updateDB() {
-        await fetch(FIREBASE_URL, { method: 'PUT', body: JSON.stringify(db) });
-        render();
+    async function sincronizar() {
+        try {
+            await fetch(FIREBASE_URL, { method: 'PUT', body: JSON.stringify(db) });
+        } catch(e) { console.error(e); }
     }
 
     function verificarSenha() {
-        if(document.getElementById('pass').value === SENHA_MESTRA) {
+        const pass = document.getElementById('pass').value;
+        if(pass === SENHA_MESTRA) {
             document.getElementById('login-screen').style.display = 'none';
             document.getElementById('app-interface').style.display = 'flex';
-            document.getElementById('qr-img').src = `https://api.qrserver.com{encodeURIComponent(window.location.href)}`;
-            lucide.createIcons(); syncDB(); setInterval(syncDB, 5000);
-        } else { alert("Senha incorreta!"); }
-    }
-
-    function fluxo(u, t, m) { state.uni = u; state.tipo = t; state.max = m; state.num = ""; render(); }
-
-    function render() {
-        const content = document.getElementById('content');
-        if (!state.uni || state.uni === "RESUMO") return;
-        const lista = Object.values(db.itens || {}).filter(i => i.uni === state.uni);
-        if (!state.num) {
-            document.getElementById('title').innerText = `Mapa: ${state.uni}`;
-            let html = '<div class="grid-local">';
-            for(let i=1; i<=state.max; i++) {
-                const total = lista.filter(x => x.num == i).length;
-                html += `<div class="box-local" onclick="state.num=${i};render()"><b>${i}</b><br><small>${total} itens</small></div>`;
-            }
-            content.innerHTML = html + '</div>';
+            lucide.createIcons();
+            carregarDados();
         } else {
-            document.getElementById('title').innerText = `${state.tipo} ${state.num}`;
-            const itens = lista.filter(x => x.num == state.num);
-            let html = `<table><tr><th>Item</th><th>Qtd</th><th>Ação</th></tr>`;
-            itens.forEach(p => {
-                html += `<tr><td><b>${p.nome}</b></td><td>${p.qtd}</td><td>
-                    <button class="qty-btn" onclick="mudar('${p.id}', 1, '${p.nome}')">+</button> 
-                    <button class="qty-btn" onclick="mudar('${p.id}', -1, '${p.nome}')">-</button>
-                </td></tr>`;
-            });
-            content.innerHTML = html + "</table>";
+            alert("Senha incorreta");
         }
-    }
-
-    function mudar(id, v, nome) {
-        db.itens[id].qtd = Math.max(0, db.itens[id].qtd + v);
-        db.historico.unshift({ data: new Date().toLocaleString(), acao: v > 0 ? "Entrada" : "Saída", item: nome, qtd: Math.abs(v) });
-        updateDB();
-    }
-
-    function verResumo() {
-        state.uni = "RESUMO";
-        document.getElementById('title').innerText = "Log de Movimentação";
-        let html = `<table><tr><th>Data</th><th>Ação</th><th>Item</th><th>Qtd</th></tr>`;
-        (db.historico || []).slice(0, 30).forEach(h => {
-            html += `<tr><td><small>${h.data}</small></td><td style="color:${h.acao=='Saída'?'var(--danger)':'var(--success)'}">${h.acao}</td><td>${h.item}</td><td>${h.qtd}</td></tr>`;
-        });
-        document.getElementById('content').innerHTML = html + "</table>";
     }
 
     function abrirModal() {
         const m = document.getElementById('modal');
-        m.style.display = (m.style.display === 'flex') ? 'none' : 'flex';
+        m.style.display = m.style.display === 'flex' ? 'none' : 'flex';
+    }
+
+    function fluxo(uni, tipo, max) {
+        state = { uni, tipo, max };
+        document.getElementById('title').innerText = `Gestão: ${uni}`;
+        let html = `<div class="grid-local">`;
+        for(let i=1; i<=max; i++) {
+            const item = db.itens[`${uni}-${i}`];
+            html += `
+                <div class="box-local" onclick="detalhe('${uni}', ${i})">
+                    <small>${tipo} ${i}</small>
+                    <b>${item ? item.qtd : 0}</b>
+                    <div style="font-size:0.6rem; color:var(--muted)">${item ? item.nome : 'Vazio'}</div>
+                </div>`;
+        }
+        html += `</div><div id="lista-detalhe"></div>`;
+        document.getElementById('content').innerHTML = html;
     }
 
     function salvar() {
-        const id = "it_" + Date.now();
         const nome = document.getElementById('f-nome').value;
-        const qtd = parseInt(document.getElementById('f-qtd').value) || 0;
-        if(!db.itens) db.itens = {};
-        db.itens[id] = { id, nome, uni: document.getElementById('f-uni').value, num: document.getElementById('f-num').value, info: document.getElementById('f-info').value, qtd };
-        db.historico.unshift({ data: new Date().toLocaleString(), acao: "Cadastro", item: nome, qtd });
-        updateDB(); abrirModal();
+        const uni = document.getElementById('f-uni').value;
+        const num = document.getElementById('f-num').value;
+        const qtd = parseInt(document.getElementById('f-qtd').value);
+
+        if(!nome || !num || !qtd) return alert("Preencha os campos");
+
+        db.itens[`${uni}-${num}`] = { nome, qtd, obs: document.getElementById('f-info').value, data: new Date().toLocaleDateString() };
+        sincronizar();
+        abrirModal();
+        fluxo(state.uni || uni, state.tipo || 'P', state.max || 12);
+    }
+
+    function verResumo() {
+        document.getElementById('title').innerText = "Relatório de Estoque";
+        let html = `<table><tr><th>ITEM</th><th>LOCAL</th><th>QTD</th></tr>`;
+        for(let chave in db.itens) {
+            const it = db.itens[chave];
+            html += `<tr><td>${it.nome}</td><td>${chave}</td><td>${it.qtd}</td></tr>`;
+        }
+        html += `</table>`;
+        document.getElementById('content').innerHTML = html;
     }
 </script>
 </body>
 </html>
-
 
